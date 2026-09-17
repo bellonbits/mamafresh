@@ -20,12 +20,21 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+MamaFresh is a Supabase-backed marketplace for customers, sellers, and admins.
+
+## Supabase setup
+
+1. Copy `.env.local.example` to `.env.local` and set the Supabase project values.
+2. Run `supabase/schema.sql` in the Supabase SQL Editor. This creates profiles, sellers, products, addresses, orders, favorites, assistant messages, RLS policies, and realtime publications.
+3. Create the first account through `/register`, then set its profile role to `admin` in Supabase before opening `/admin`.
+4. Add product and seller rows in Supabase. The remaining catalog views still contain legacy presentation fixtures and must be migrated to live rows before production use.
+
+The Groq credential is server-only (`GROQ_API_KEY`); do not use a `VITE_` or `NEXT_PUBLIC_` prefix for it. Rotate the API key shared during setup before deployment.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 

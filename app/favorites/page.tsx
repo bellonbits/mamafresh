@@ -1,0 +1,192 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { ChevronLeft, Heart, ShoppingCart, ArrowRight } from "lucide-react";
+import { getDefaultProductImage } from "@/lib/mock-data";
+import CustomerSidebar from "@/components/CustomerSidebar";
+import { cn } from "@/lib/utils";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { useFavorites } from "@/lib/hooks/useFavorites";
+import type { ProductRow } from "@/lib/supabase/types";
+
+const FAVORITE_CATEGORIES = [
+  { id: "all", label: "All Items" },
+  { id: "fruits", label: "Fruits" },
+  { id: "vegetables", label: "Vegetables" },
+  { id: "roots-tubers", label: "Roots & Tubers" },
+];
+
+export default function FavoritesPage() {
+  const router = useRouter();
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [visibleCount, setVisibleCount] = useState(8);
+  const { favoriteIds, toggle, isSignedIn, loading: favoritesLoading } = useFavorites();
+  const [products, setProducts] = useState<ProductRow[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (favoritesLoading) return;
+    let active = true;
+    const load = async () => {
+      const ids = Array.from(favoriteIds);
+      if (ids.length === 0) {
+        if (active) { setProducts([]); setLoading(false); }
+        return;
+      }
+      const { data } = await getSupabaseBrowserClient().from("products").select("*").in("id", ids);
+      if (active) {
+        setProducts((data ?? []) as ProductRow[]);
+        setLoading(false);
+      }
+    };
+    void load();
+    return () => { active = false; };
+  }, [favoriteIds, favoritesLoading]);
+
+  const favoriteProducts = products.filter((p) => {
+    if (selectedCategory === "all") return true;
+    return p.category_slug === selectedCategory;
+  });
+  const visibleProducts = favoriteProducts.slice(0, visibleCount);
+
+  return (
+    <div className="min-h-screen bg-[#FFFDF7] pb-32 animate-fade-in">
+      {/* Top Header */}
+      <header className="px-4 sm:px-8 lg:px-12 py-4 flex items-center justify-between sticky top-0 z-30 bg-[#FFFDF7]/95 backdrop-blur-xs border-b border-gray-100">
+        <button
+          onClick={() => router.back()}
+          aria-label="Back"
+          className="w-9 h-9 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-700 active:scale-95 transition-transform"
+        >
+          <ChevronLeft size={20} />
+        </button>
+        <div>
+          <h1 className="text-lg font-black text-[#073729]">My Favorites</h1>
+          <p className="text-xs text-gray-400">{favoriteProducts.length} saved items</p>
+        </div>
+        <Link
+          href="/cart"
+          aria-label="Cart"
+          className="w-9 h-9 rounded-full bg-emerald-50 text-[#16A34A] flex items-center justify-center active:scale-95 transition-transform"
+        >
+          <ShoppingCart size={16} />
+        </Link>
+      </header>
+
+      <div className="mx-auto flex max-w-7xl items-start gap-6 px-4 sm:px-8 lg:px-12">
+        <CustomerSidebar />
+        <div className="min-w-0 flex-1">
+          {/* Category Filter Chips */}
+          <div className="flex items-center gap-2 overflow-x-auto py-4 no-scrollbar">
+            {FAVORITE_CATEGORIES.map((cat) => {
+              const isSelected = selectedCategory === cat.id;
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => setSelectedCategory(cat.id)}
+                  className={cn(
+                    "whitespace-nowrap rounded-full px-3.5 py-1.5 text-xs font-bold transition-all active:scale-95",
+                    isSelected
+                      ? "bg-[#073729] text-white shadow-xs"
+                      : "border border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+                  )}
+                >
+                  {cat.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* 2-Column Product Grid */}
+          <main className="pt-2">
+        {!isSignedIn && !favoritesLoading ? (
+          <div className="py-20 text-center space-y-3">
+            <div className="w-16 h-16 rounded-full bg-red-50 text-red-400 flex items-center justify-center mx-auto">
+              <Heart size={28} />
+            </div>
+            <h2 className="text-base font-bold text-gray-900">Sign in to see your favorites</h2>
+            <p className="text-xs text-gray-400">Favorites saved with the heart icon appear here.</p>
+            <Link
+              href="/login"
+              className="inline-flex items-center gap-1.5 px-6 py-2.5 rounded-full bg-[#073729] text-white text-xs font-bold shadow-sm"
+            >
+              <span>Sign in</span>
+              <ArrowRight size={13} />
+            </Link>
+          </div>
+        ) : loading || favoritesLoading ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-8">
+            {Array.from({ length: 8 }).map((_, i) => <div key={i} className="skeleton aspect-square rounded-2xl" />)}
+          </div>
+        ) : favoriteProducts.length === 0 ? (
+          <div className="py-20 text-center space-y-3">
+            <div className="w-16 h-16 rounded-full bg-red-50 text-red-400 flex items-center justify-center mx-auto">
+              <Heart size={28} />
+            </div>
+            <h2 className="text-base font-bold text-gray-900">No favorites in this category</h2>
+            <p className="text-xs text-gray-400">Save items using the heart icon while browsing.</p>
+            <Link
+              href="/home"
+              className="inline-flex items-center gap-1.5 px-6 py-2.5 rounded-full bg-[#073729] text-white text-xs font-bold shadow-sm"
+            >
+              <span>Explore Produce</span>
+              <ArrowRight size={13} />
+            </Link>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-8">
+            {visibleProducts.map((product) => {
+              return (
+                <article key={product.id} className="group relative">
+                  <Link href={`/products/${product.id}`} className="block">
+                    <div className="relative aspect-square overflow-hidden rounded-2xl bg-[#F2F5F0]">
+                      <Image
+                        src={product.image_url || getDefaultProductImage(product.name, product.category)}
+                        alt={product.name}
+                        fill
+                        className="object-contain p-5 transition-transform duration-300 group-hover:scale-105"
+                        sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
+                      />
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.preventDefault();
+                          toggle(product.id);
+                        }}
+                        aria-label={`Remove ${product.name} from favorites`}
+                        className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-gray-400 shadow-sm transition-colors hover:text-red-500"
+                      >
+                        <Heart size={17} className="fill-red-500 text-red-500" />
+                      </button>
+                    </div>
+                  </Link>
+                  <div className="pt-3 px-1">
+                    <h2 className="truncate text-sm font-bold text-gray-900">{product.name}</h2>
+                    <p className="mt-1 truncate text-xs text-gray-500">{product.seller_name}</p>
+                    <p className="mt-2 text-sm font-black text-[#073729]">KSh {product.price.toLocaleString("en-KE")}</p>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        )}
+        {visibleCount < favoriteProducts.length && (
+          <div className="flex justify-center pt-10">
+            <button
+              type="button"
+              onClick={() => setVisibleCount((count) => count + 8)}
+              className="rounded-full border border-[#073729] px-8 py-3 text-xs font-bold text-[#073729] transition-colors hover:bg-[#073729] hover:text-white"
+            >
+              Load More
+            </button>
+          </div>
+        )}
+          </main>
+        </div>
+      </div>
+    </div>
+  );
+}

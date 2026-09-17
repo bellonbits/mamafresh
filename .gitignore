@@ -32,6 +32,11 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+env.txt
+
+# Supabase CLI local session state — includes the live Postgres pooler URL
+# and project ref, must never be committed
+supabase/.temp/
 
 # vercel
 .vercel
@@ -39,3 +44,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# unused scraped reference pages saved into public/ during early design research —
+# not referenced by any app code, ~54MB of dead weight
+public/*.html
+public/*_files/
