@@ -4,6 +4,17 @@ const config: CapacitorConfig = {
   appId: 'com.mamafresh.app',
   appName: 'MamaFresh',
   webDir: 'dist',
+  // By default iOS serves the app from the custom "capacitor://localhost"
+  // scheme, which can trip up CORS handling for external APIs (Supabase
+  // included) — some responses that satisfy a normal https:// origin fail
+  // for this non-standard one, surfacing as a generic "TypeError: Load
+  // failed" with no further detail. Presenting as a plain https origin
+  // avoids the whole class of problem.
+  server: {
+    iosScheme: 'https',
+    androidScheme: 'https',
+    hostname: 'localhost',
+  },
   plugins: {
     StatusBar: {
       overlaysWebView: false,
