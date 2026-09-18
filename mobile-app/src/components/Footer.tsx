@@ -15,8 +15,19 @@ import {
 export default function Footer() {
   const pathname = usePathname();
 
-  // Hide footer on seller/admin dashboards, the full-screen AI page, and onboarding
-  if ((pathname.startsWith("/seller") && pathname !== "/seller/register") || pathname.startsWith("/admin") || pathname === "/assistant" || pathname === "/welcome") {
+  // Hide footer on seller/admin dashboards, the full-screen AI page, onboarding,
+  // and any page with its own fixed bottom action bar — a fixed-position bar
+  // stays pinned to the viewport while the footer scrolls freely underneath it,
+  // so the two can't coexist without the bar appearing to float over the footer.
+  if (
+    (pathname.startsWith("/seller") && pathname !== "/seller/register") ||
+    pathname.startsWith("/admin") ||
+    pathname === "/assistant" ||
+    pathname === "/welcome" ||
+    pathname === "/cart" ||
+    pathname === "/checkout" ||
+    pathname.startsWith("/products/")
+  ) {
     return null;
   }
 
