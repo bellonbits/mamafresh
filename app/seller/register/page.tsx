@@ -48,7 +48,12 @@ export default function SellerOnboardingPage() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
-  const reviewIssues = useMemo(() => collectReviewIssues(form, products, true), [form, products]);
+  // By the review step the seller is already authenticated (step 1 can't be
+  // passed otherwise), and the password field is only ever used transiently
+  // during signup — it's never persisted back, so checking it here would
+  // always fail. isNewAccount is false for the same reason handleContinue's
+  // own step-1 validation below already passes false.
+  const reviewIssues = useMemo(() => collectReviewIssues(form, products, false), [form, products]);
 
   const goTo = (target: number) => {
     setErrors({});
@@ -82,7 +87,7 @@ export default function SellerOnboardingPage() {
   };
 
   const handleSubmit = async () => {
-    const issues = collectReviewIssues(form, products, true).filter((i) => i.step !== 6);
+    const issues = collectReviewIssues(form, products, false).filter((i) => i.step !== 6);
     if (issues.length > 0) return;
     setSubmitting(true);
     setSubmitError(null);
