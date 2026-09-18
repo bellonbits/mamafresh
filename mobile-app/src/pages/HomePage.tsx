@@ -79,6 +79,7 @@ export default function CustomerHomePage() {
   const [showMenu, setShowMenu] = useState(false);
   const [products, setProducts] = useState<ProductRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [productsError, setProductsError] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
@@ -103,9 +104,11 @@ export default function CustomerHomePage() {
       .select("*")
       .eq("is_available", true)
       .order("is_featured", { ascending: false })
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        if (error) console.error("[HomePage] products fetch failed:", error);
         if (active) {
           setProducts((data ?? []) as ProductRow[]);
+          setProductsError(error ? error.message : null);
           setLoading(false);
         }
       });
@@ -320,7 +323,7 @@ export default function CustomerHomePage() {
 
         <section className="mt-6 lg:mt-9"><div className="mb-4 flex items-end justify-between lg:mb-4"><div><h2 className="text-xl font-black text-[#073729] lg:hidden">Special Offers</h2><h2 className="hidden text-xl font-black text-[#073729] lg:block">Deals of the week</h2><p className="mt-1 text-xs text-gray-400 hidden lg:block">Fresh picks at stall-direct prices</p></div><Link href="/offers" className="text-xs font-bold text-[#16A34A] lg:inline hidden">View all <ArrowRight size={13} className="inline" /></Link></div><div className="scroll-x flex gap-3 pb-1 lg:hidden">{promoCards.map((promo) => <Link href="/offers" key={promo.title} className={cn("relative min-w-[85%] shrink-0 snap-start overflow-hidden rounded-2xl p-5 shadow-sm", promo.tone)}><div className="relative z-10 max-w-[58%]"><h3 className="text-lg font-black leading-tight">{promo.title}</h3><p className="mt-1 text-xs opacity-80">{promo.copy}</p><span className="mt-4 inline-flex items-center gap-1 rounded-full bg-white/90 px-3 py-1.5 text-[10px] font-black text-[#073729]">{promo.action}<ArrowRight size={12} /></span></div><Image src={promo.image} alt="" fill className="object-contain object-right opacity-80 mix-blend-multiply" sizes="85vw" /></Link>)}</div><div className="hidden gap-4 lg:grid lg:grid-cols-3">{promoCards.map((promo) => <Link href="/offers" key={promo.title} className={cn("relative min-h-40 overflow-hidden rounded-2xl p-5 shadow-sm transition hover:-translate-y-1", promo.tone)}><div className="relative z-10 max-w-[58%]"><h3 className="text-lg font-black leading-tight">{promo.title}</h3><p className="mt-1 text-xs opacity-80">{promo.copy}</p><span className="mt-4 inline-flex items-center gap-1 rounded-full bg-white/90 px-3 py-1.5 text-[10px] font-black text-[#073729]">{promo.action}<ArrowRight size={12} /></span></div><Image src={promo.image} alt="" fill className="object-contain object-right opacity-80 mix-blend-multiply" sizes="240px" /></Link>)}</div></section>
 
-        <section className="mt-8 lg:mt-10"><div className="mb-4 flex items-end justify-between"><div><h2 className="text-xl font-black text-[#073729]">Popular Items</h2><p className="mt-1 text-xs text-gray-400 lg:block hidden">Popular with shoppers near you</p></div><Link href="/shops" className="text-xs font-bold text-[#16A34A]">View All <ArrowRight size={13} className="inline" /></Link></div>{loading ? (<div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">{Array.from({ length: 8 }).map((_, i) => <div key={i} className="skeleton h-56 rounded-2xl" />)}</div>) : featuredProducts.length === 0 ? (<p className="py-10 text-center text-sm text-gray-400">No products available yet.</p>) : (<div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">{featuredProducts.slice(0, 8).map((product) => <ProductCard key={product.id} product={product} />)}</div>)}</section>
+        <section className="mt-8 lg:mt-10"><div className="mb-4 flex items-end justify-between"><div><h2 className="text-xl font-black text-[#073729]">Popular Items</h2><p className="mt-1 text-xs text-gray-400 lg:block hidden">Popular with shoppers near you</p></div><Link href="/shops" className="text-xs font-bold text-[#16A34A]">View All <ArrowRight size={13} className="inline" /></Link></div>{loading ? (<div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">{Array.from({ length: 8 }).map((_, i) => <div key={i} className="skeleton h-56 rounded-2xl" />)}</div>) : featuredProducts.length === 0 ? (<p className="py-10 text-center text-sm text-gray-400">{productsError ? `Couldn't load products: ${productsError}` : "No products available yet."}</p>) : (<div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">{featuredProducts.slice(0, 8).map((product) => <ProductCard key={product.id} product={product} />)}</div>)}</section>
 
         <section className="mt-10 rounded-3xl bg-[#E6F4D2] px-6 py-8 sm:px-10 lg:flex lg:items-center lg:justify-between"><div><p className="text-xs font-black uppercase tracking-wider text-[#16A34A]">MamaFresh promise</p><h2 className="mt-2 max-w-xl text-2xl font-black text-[#073729]">Fresh produce, fair prices, and neighborhood sellers you can trust.</h2></div><Link href="/about" className="mt-5 inline-flex items-center gap-2 rounded-full bg-[#073729] px-5 py-3 text-xs font-black text-white lg:mt-0">Our mission <ArrowRight size={14} /></Link></section>
       </main>

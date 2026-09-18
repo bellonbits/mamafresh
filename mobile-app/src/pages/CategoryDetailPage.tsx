@@ -26,7 +26,8 @@ export default function CategoryDetailPage() {
         if (active) { setProducts((data ?? []) as ProductRow[]); setLoading(false); }
       });
     return () => { active = false; };
-  }, [slug, category]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slug, category?.slug]);
 
   if (!category) {
     return (
