@@ -1,25 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Image from "next/image";
-import { Plus, Pencil, Trash2, X } from "lucide-react";
+import { Plus, Pencil, Trash2, X, Camera, Loader2 } from "lucide-react";
 import { TextField, SelectField } from "@/components/seller-onboarding/FormField";
 import { PRODUCT_UNITS } from "@/components/seller-onboarding/constants";
 import { CATEGORIES, getDefaultProductImage } from "@/lib/mock-data";
+import { uploadSellerProductImage } from "@/lib/cloudinary/upload";
 import { formatKSh, cn } from "@/lib/utils";
 import type { ProductRow } from "@/lib/supabase/types";
 
 interface Props {
   products: ProductRow[];
-  onAdd: (input: { name: string; category: string; subcategory: string; price: number; unit: string; stock: number; available: boolean }) => Promise<{ error: string | null }>;
-  onUpdate: (id: string, patch: Partial<Pick<ProductRow, "name" | "category" | "price" | "unit" | "stock_quantity" | "is_available">>) => Promise<{ error: string | null }>;
+  onAdd: (input: { name: string; category: string; subcategory: string; price: number; unit: string; stock: number; available: boolean; imageUrl?: string }) => Promise<{ error: string | null }>;
+  onUpdate: (id: string, patch: Partial<Pick<ProductRow, "name" | "category" | "price" | "unit" | "stock_quantity" | "is_available" | "image_url">>) => Promise<{ error: string | null }>;
   onRemove: (id: string) => Promise<{ error: string | null }>;
   canAddProducts: boolean;
 }
 
 const CATEGORY_OPTIONS = CATEGORIES.map((c) => ({ value: c.name, label: c.name }));
 
-const emptyDraft = { name: "", category: CATEGORIES[0].name, subcategory: "", price: "", unit: "kg", stock: "", available: true };
+const emptyDraft = { name: "", category: CATEGORIES[0].name, subcategory: "", price: "", unit: "kg", stock: "", available: true, imageUrl: "" };
 
 export default function StepProducts({ products, onAdd, onUpdate, onRemove, canAddProducts }: Props) {
   const [showForm, setShowForm] = useState(false);
@@ -28,12 +29,16 @@ export default function StepProducts({ products, onAdd, onUpdate, onRemove, canA
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [imageError, setImageError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const openAddForm = () => {
     setDraft(emptyDraft);
     setEditingId(null);
     setErrors({});
     setFormError(null);
+    setImageError(null);
     setShowForm(true);
   };
 
@@ -46,11 +51,31 @@ export default function StepProducts({ products, onAdd, onUpdate, onRemove, canA
       unit: product.unit,
       stock: String(product.stock_quantity),
       available: product.is_available,
+      imageUrl: product.image_url || "",
     });
     setEditingId(product.id);
     setErrors({});
     setFormError(null);
+    setImageError(null);
     setShowForm(true);
+  };
+
+  const handlePhotoSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setImageError(null);
+    setUploadingImage(true);
+    try {
+      const url = await uploadSellerProductImage(file);
+      setDraft((d) => ({ ...d, imageUrl: url }));
+      // Editing an existing product: save the photo immediately so it's not lost if the form is closed early.
+      if (editingId) await onUpdate(editingId, { image_url: url });
+    } catch (err) {
+      setImageError(err instanceof Error ? err.message : "Unable to upload that photo.");
+    } finally {
+      setUploadingImage(false);
+    }
   };
 
   const validate = () => {
@@ -80,9 +105,10 @@ export default function StepProducts({ products, onAdd, onUpdate, onRemove, canA
       unit: draft.unit,
       stock: draft.stock.trim() ? Number(draft.stock) : 0,
       available: draft.available,
+      imageUrl: draft.imageUrl,
     };
     const result = editingId
-      ? await onUpdate(editingId, { name: payload.name, category: payload.category, price: payload.price, unit: payload.unit, stock_quantity: payload.stock, is_available: payload.available })
+      ? await onUpdate(editingId, { name: payload.name, category: payload.category, price: payload.price, unit: payload.unit, stock_quantity: payload.stock, is_available: payload.available, image_url: payload.imageUrl })
       : await onAdd(payload);
     setSaving(false);
     if (result.error) {
@@ -133,6 +159,33 @@ export default function StepProducts({ products, onAdd, onUpdate, onRemove, canA
             <p className="text-sm font-black text-[#073729]">{editingId ? "Edit Product" : "Add Product"}</p>
             <button type="button" onClick={() => setShowForm(false)} aria-label="Close" className="rounded-full p-1 text-gray-400 hover:bg-gray-100"><X size={16} /></button>
           </div>
+
+          <div className="mb-4 flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploadingImage}
+              aria-label="Upload product photo"
+              className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border-2 border-dashed border-gray-300 bg-white disabled:opacity-60"
+            >
+              {uploadingImage ? (
+                <span className="flex h-full w-full items-center justify-center text-gray-400"><Loader2 size={18} className="animate-spin" /></span>
+              ) : draft.imageUrl ? (
+                <Image src={draft.imageUrl} alt="" fill className="object-contain p-1" sizes="64px" />
+              ) : (
+                <span className="flex h-full w-full items-center justify-center text-gray-300"><Camera size={20} /></span>
+              )}
+            </button>
+            <div className="min-w-0">
+              <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploadingImage} className="text-xs font-bold text-[#16A34A] hover:underline disabled:opacity-60">
+                {draft.imageUrl ? "Change photo" : "Upload a photo"}
+              </button>
+              <p className="mt-0.5 text-[10px] text-gray-400">A default image is used until you upload one.</p>
+              {imageError && <p className="mt-1 text-[10px] font-semibold text-red-600">{imageError}</p>}
+            </div>
+            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => void handlePhotoSelected(e)} />
+          </div>
+
           <div className="grid gap-4 sm:grid-cols-2">
             <TextField label="Product Name" required value={draft.name} onChange={(v) => setDraft((d) => ({ ...d, name: v }))} placeholder="Tomatoes" error={errors.name} />
             <SelectField label="Category" required value={draft.category} onChange={(v) => setDraft((d) => ({ ...d, category: v }))} options={CATEGORY_OPTIONS} error={errors.category} />

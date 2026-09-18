@@ -231,7 +231,7 @@ export function useSellerOnboarding() {
     }
   }, [auth, form]);
 
-  const addProduct = useCallback(async (input: { name: string; category: string; subcategory: string; price: number; unit: string; stock: number; available: boolean }) => {
+  const addProduct = useCallback(async (input: { name: string; category: string; subcategory: string; price: number; unit: string; stock: number; available: boolean; imageUrl?: string }) => {
     if (!sellerIdRef.current) return { error: "Save your shop details first." };
     const supabase = getSupabaseBrowserClient();
     const id = `${sellerIdRef.current}-${slugify(input.name)}-${Date.now().toString(36)}`;
@@ -248,13 +248,14 @@ export function useSellerOnboarding() {
       unit: input.unit,
       stock_quantity: input.stock,
       is_available: input.available,
+      image_url: input.imageUrl || "",
     }).select("*").single();
     if (error) return { error: error.message };
     setProducts((current) => [...current, data as ProductRow]);
     return { error: null };
   }, [form.shopName]);
 
-  const updateProduct = useCallback(async (id: string, patch: Partial<Pick<ProductRow, "name" | "category" | "price" | "unit" | "stock_quantity" | "is_available">>) => {
+  const updateProduct = useCallback(async (id: string, patch: Partial<Pick<ProductRow, "name" | "category" | "price" | "unit" | "stock_quantity" | "is_available" | "image_url">>) => {
     const supabase = getSupabaseBrowserClient();
     const { error } = await supabase.from("products").update(patch).eq("id", id);
     if (error) return { error: error.message };

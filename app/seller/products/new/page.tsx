@@ -1,12 +1,14 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ChevronLeft, Camera, Sparkles } from "lucide-react";
+import { ChevronLeft, Camera, Sparkles, Loader2 } from "lucide-react";
 import { getDefaultProductImage } from "@/lib/mock-data";
 import { useCurrentSeller } from "@/lib/hooks/useCurrentSeller";
 import { useCategories } from "@/lib/hooks/useCategories";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { uploadSellerProductImage } from "@/lib/cloudinary/upload";
 
 function slugify(value: string) {
   return value
@@ -38,6 +40,10 @@ function AddProductForm() {
   const [stock, setStock] = useState("25");
   const [description, setDescription] = useState("");
   const [available, setAvailable] = useState(true);
+  const [imageUrl, setImageUrl] = useState("");
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [imageError, setImageError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [loadingProduct, setLoadingProduct] = useState(!!editId);
@@ -56,6 +62,7 @@ function AddProductForm() {
       setStock(String(data.stock_quantity));
       setDescription(data.description ?? "");
       setAvailable(data.is_available);
+      setImageUrl(data.image_url ?? "");
       setLoadingProduct(false);
     });
     return () => { active = false; };
@@ -86,7 +93,7 @@ function AddProductForm() {
       is_available: available,
       category,
       category_slug: categoryMeta?.slug ?? slugify(category),
-      image_url: getDefaultProductImage(name, category),
+      image_url: imageUrl || getDefaultProductImage(name, category),
     };
 
     const { error: saveError } = editId
@@ -106,6 +113,22 @@ function AddProductForm() {
     setTimeout(() => {
       router.push("/seller/products");
     }, 1200);
+  };
+
+  const handlePhotoSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setImageError(null);
+    setUploadingImage(true);
+    try {
+      const url = await uploadSellerProductImage(file);
+      setImageUrl(url);
+    } catch (err) {
+      setImageError(err instanceof Error ? err.message : "Unable to upload that photo.");
+    } finally {
+      setUploadingImage(false);
+    }
   };
 
   const generateDescription = async () => {
@@ -165,13 +188,28 @@ function AddProductForm() {
       <form onSubmit={handleSubmit} className="space-y-4 max-w-md mx-auto lg:max-w-lg">
         {error && <p className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-semibold text-red-700">{error}</p>}
         {/* Photo Upload Box */}
-        <div className="bg-white rounded-2xl p-4 border border-dashed border-emerald-300 text-center flex flex-col items-center justify-center py-6 cursor-pointer hover:bg-emerald-50/40 transition-colors">
-          <div className="w-12 h-12 rounded-full bg-[#DCFCE7] text-[#15803d] flex items-center justify-center mb-2">
-            <Camera size={22} />
-          </div>
-          <p className="text-xs font-bold text-gray-800">Tap to snap or upload produce photo</p>
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={uploadingImage}
+          className="w-full bg-white rounded-2xl p-4 border border-dashed border-emerald-300 text-center flex flex-col items-center justify-center py-6 cursor-pointer hover:bg-emerald-50/40 transition-colors disabled:opacity-60"
+        >
+          {imageUrl ? (
+            <div className="relative mb-2 h-16 w-16 overflow-hidden rounded-xl bg-gray-50">
+              <Image src={imageUrl} alt="" fill className="object-contain p-1" sizes="64px" />
+            </div>
+          ) : (
+            <div className="w-12 h-12 rounded-full bg-[#DCFCE7] text-[#15803d] flex items-center justify-center mb-2">
+              {uploadingImage ? <Loader2 size={20} className="animate-spin" /> : <Camera size={22} />}
+            </div>
+          )}
+          <p className="text-xs font-bold text-gray-800">
+            {uploadingImage ? "Uploading..." : imageUrl ? "Tap to change photo" : "Tap to snap or upload produce photo"}
+          </p>
           <p className="text-[10px] text-gray-400 mt-0.5">A default image is used until you upload one</p>
-        </div>
+          {imageError && <p className="mt-1 text-[10px] font-semibold text-red-600">{imageError}</p>}
+        </button>
+        <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => void handlePhotoSelected(e)} />
 
         {/* Product Name */}
         <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-xs space-y-3">

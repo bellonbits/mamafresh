@@ -49,6 +49,11 @@ export function uploadProductImage(file: File): Promise<string> {
   return uploadViaSignedEndpoint(file, "/api/admin/cloudinary-sign");
 }
 
+/** Any registered seller: uploads a photo for one of their own products, signed by /api/seller/cloudinary-sign. */
+export function uploadSellerProductImage(file: File): Promise<string> {
+  return uploadViaSignedEndpoint(file, "/api/seller/cloudinary-sign");
+}
+
 /** Any signed-in user: uploads their own profile photo, signed by /api/account/avatar-sign. */
 export function uploadAvatarImage(file: File): Promise<string> {
   return uploadViaSignedEndpoint(file, "/api/account/avatar-sign");
