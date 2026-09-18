@@ -62,6 +62,14 @@ html {
   width: 100%;
   max-width: 100%;
   scroll-behavior: smooth;
+  /* Android WebView auto-boosts font sizes based on screen-width heuristics
+     ("font boosting"), which can make text render inconsistently sized
+     across devices even though the CSS is identical. iOS never does this,
+     so the app looked "sized wrong" specifically on some Android/iPhone
+     screens relative to others. Disable the auto-adjustment everywhere so
+     text renders at exactly the size the CSS specifies, consistently. */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
