@@ -58,13 +58,46 @@ export default function AdminSellersPage() {
     if (!confirm(`Permanently delete "${seller.name}"? This also deletes all of their product listings and cannot be undone.`)) return;
     const { error } = await getSupabaseBrowserClient().from("sellers").delete().eq("id", seller.id);
     if (error) {
-      setToast(error.code === "23503" ? "This seller has order history and can't be deleted — suspend them instead to preserve records." : error.message);
+      if (error.code === "23503") {
+        void handleForceDelete(seller);
+        return;
+      }
+      setToast(error.message);
       setTimeout(() => setToast(null), 3500);
       return;
     }
     setSellers((prev) => prev.filter((s) => s.id !== seller.id));
     setToast(`${seller.name} deleted.`);
     setTimeout(() => setToast(null), 2000);
+  };
+
+  // Only reached when the seller has order history blocking a normal delete.
+  // Requires typing the seller's exact name — a stronger confirmation than a
+  // plain OK/Cancel dialog, since this permanently erases order/financial records.
+  const handleForceDelete = async (seller: SellerWithStats) => {
+    const typed = prompt(
+      `"${seller.name}" has order history. Deleting them will also PERMANENTLY delete every order and order line-item tied to them — this cannot be undone and cannot be recovered.\n\nType the seller's name exactly to confirm: ${seller.name}`
+    );
+    if (typed !== seller.name) {
+      if (typed !== null) { setToast("Name didn't match — deletion cancelled."); setTimeout(() => setToast(null), 2500); }
+      return;
+    }
+    const supabase = getSupabaseBrowserClient();
+    const { error: ordersError } = await supabase.from("orders").delete().eq("seller_id", seller.id);
+    if (ordersError) {
+      setToast(ordersError.message);
+      setTimeout(() => setToast(null), 3500);
+      return;
+    }
+    const { error } = await supabase.from("sellers").delete().eq("id", seller.id);
+    if (error) {
+      setToast(error.message);
+      setTimeout(() => setToast(null), 3500);
+      return;
+    }
+    setSellers((prev) => prev.filter((s) => s.id !== seller.id));
+    setToast(`${seller.name} and all of their order history permanently deleted.`);
+    setTimeout(() => setToast(null), 3000);
   };
 
   const filtered = sellers.filter((s) => {

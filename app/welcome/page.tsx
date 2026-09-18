@@ -65,24 +65,24 @@ export default function WelcomePage() {
         >
           Skip
         </button>
-
-        <div className="absolute inset-x-0 bottom-0 flex justify-center gap-1.5 pb-4">
-          {SLIDES.map((_, i) => (
-            <button
-              key={i}
-              aria-label={`Go to slide ${i + 1}`}
-              onClick={() => goTo(i)}
-              className={cn("h-1.5 rounded-full transition-all", i === index ? "w-6 bg-[#B8EF4A]" : "w-1.5 bg-white/70")}
-            />
-          ))}
-        </div>
       </div>
 
       <div className="px-6 pb-8 pt-7" style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 2rem)" }}>
         <h1 className="text-2xl font-black leading-tight tracking-tight text-[#073729]">{slide.title}</h1>
         <p className="mt-2.5 text-sm leading-relaxed text-gray-500">{slide.copy}</p>
 
-        <div className="mt-7 flex items-center gap-3">
+        <div className="mt-6 flex justify-center gap-1.5">
+          {SLIDES.map((_, i) => (
+            <button
+              key={i}
+              aria-label={`Go to slide ${i + 1}`}
+              onClick={() => goTo(i)}
+              className={cn("h-1.5 rounded-full transition-all", i === index ? "w-6 bg-[#073729]" : "w-1.5 bg-gray-200")}
+            />
+          ))}
+        </div>
+
+        <div className="mt-6 flex items-center gap-3">
           {!isLast && (
             <button
               onClick={() => finishOnboarding(router)}

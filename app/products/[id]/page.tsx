@@ -21,6 +21,7 @@ import {
   Sparkles,
   UserRound,
   Flag,
+  Truck,
 } from "lucide-react";
 import { getDefaultProductImage } from "@/lib/mock-data";
 import { useCartStore } from "@/lib/store/cart";
@@ -270,16 +271,29 @@ export default function ProductDetailsPage({ params }: Props) {
         <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-3 lg:hidden" />
 
         {/* Hero Product Image */}
-        <div className="relative w-full h-72 my-2 flex items-center justify-center rounded-2xl bg-[#F8FAFB] lg:col-start-1 lg:row-start-1 lg:h-[460px]">
+        <div className="relative w-full h-72 my-2 flex items-center justify-center rounded-2xl bg-[#EAF7EE] lg:col-start-1 lg:row-start-1 lg:h-[460px]">
           <Image
             src={detailImgSrc}
             alt={product.name}
             fill
             priority
-            className="object-contain p-2"
+            className="object-contain p-6"
             sizes="(max-width: 480px) 100vw, 400px"
             onError={() => setDetailImgSrc(getDefaultProductImage(product.name, product.category))}
           />
+          {galleryUrls.length > 1 && (
+            <div className="absolute inset-x-0 bottom-3 flex justify-center gap-1.5">
+              {galleryUrls.map((image, index) => (
+                <button
+                  key={`${image}-${index}`}
+                  type="button"
+                  onClick={() => setDetailImgSrc(image)}
+                  aria-label={`View product image ${index + 1}`}
+                  className={cn("h-1.5 rounded-full transition-all", detailImgSrc === image ? "w-6 bg-[#16A34A]" : "w-1.5 bg-white border border-gray-200")}
+                />
+              ))}
+            </div>
+          )}
         </div>
 
         {galleryUrls.length > 1 && (
@@ -351,19 +365,41 @@ export default function ProductDetailsPage({ params }: Props) {
           </div>
         </div>
 
-        {/* Price & Fast Delivery Tag Row */}
-        <div className="mt-4 flex items-center justify-between gap-3 lg:justify-start lg:gap-8">
-          <FormattedPrice price={currentPrice} size="xl" />
+        {/* Details / Support / Ratings quick-nav */}
+        <div className="mt-4 flex items-center gap-6 border-b border-gray-100 pb-2 text-xs font-bold text-gray-400">
+          <span className="text-[#16A34A]">Details</span>
+          {seller && (
+            <button type="button" onClick={() => document.getElementById("seller-support")?.scrollIntoView({ behavior: "smooth", block: "center" })} className="hover:text-[#073729]">
+              Support
+            </button>
+          )}
+          <button type="button" onClick={() => document.getElementById("product-ratings")?.scrollIntoView({ behavior: "smooth", block: "start" })} className="hover:text-[#073729]">
+            Ratings
+          </button>
+        </div>
 
-          <div className="flex items-center gap-1.5 bg-[#F3E8FF] text-[#7E22CE] px-3 py-1.5 rounded-full text-[11px] font-bold shadow-xs">
-            <Zap size={13} className="fill-[#7E22CE]" />
-            <span>Available on fast delivery</span>
+        {/* Price */}
+        <div className="mt-4">
+          <FormattedPrice price={currentPrice} size="xl" />
+        </div>
+
+        {/* Delivery Badges */}
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          {product.fast_delivery && (
+            <div className="flex items-center gap-1.5 bg-[#F3E8FF] text-[#7E22CE] px-3 py-1.5 rounded-full text-[11px] font-bold shadow-xs">
+              <Zap size={13} className="fill-[#7E22CE]" />
+              <span>25-35 mins fast delivery</span>
+            </div>
+          )}
+          <div className="flex items-center gap-1.5 bg-[#EAF7EE] text-[#16A34A] px-3 py-1.5 rounded-full text-[11px] font-bold shadow-xs">
+            <Truck size={13} />
+            <span>Free delivery over KSh 1,500</span>
           </div>
         </div>
 
         {/* Store Contact Card (Design system) */}
         {seller && (
-        <div className="mt-4 bg-[#F8FAF9] border border-gray-100 rounded-2xl p-3.5 flex items-center justify-between">
+        <div id="seller-support" className="mt-4 bg-[#F8FAF9] border border-gray-100 rounded-2xl p-3.5 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-[#EAF7EE] text-[#073729] flex items-center justify-center">
               <Store size={20} strokeWidth={2.2} />
@@ -432,7 +468,7 @@ export default function ProductDetailsPage({ params }: Props) {
         {/* ─────────────────────────────────────────────────────────── */}
         {/*  Customer Reviews Section (from design system)              */}
         {/* ─────────────────────────────────────────────────────────── */}
-        <div className="mt-10 pt-5 border-t border-gray-100 lg:col-span-2 lg:row-start-6 lg:mt-12">
+        <div id="product-ratings" className="mt-10 pt-5 border-t border-gray-100 lg:col-span-2 lg:row-start-6 lg:mt-12">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-base font-extrabold text-[#073729]">Customer Reviews</h3>
@@ -594,7 +630,7 @@ export default function ProductDetailsPage({ params }: Props) {
       {/* ─────────────────────────────────────────────────────────── */}
       {/*  Bottom Sticky Action Bar                                   */}
       {/* ─────────────────────────────────────────────────────────── */}
-      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-2xl bg-white/95 backdrop-blur-md px-5 py-3.5 border-t border-gray-100 flex items-center gap-3 z-40 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] lg:rounded-t-2xl">
+      <div className="above-bottom-nav fixed left-1/2 -translate-x-1/2 w-full max-w-2xl bg-white/95 backdrop-blur-md px-5 py-3.5 border-t border-gray-100 flex items-center gap-3 z-40 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] lg:rounded-t-2xl">
         {/* Quantity Stepper Capsule */}
         <div className="bg-white border border-gray-200 rounded-full px-2 py-1.5 flex items-center gap-3 shadow-xs">
           <button

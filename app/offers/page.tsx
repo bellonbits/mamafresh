@@ -3,13 +3,21 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Check, Copy, Menu, Sparkles, Tag, X } from "lucide-react";
+import { ArrowRight, Check, ChevronRight, Copy, Home as HomeIcon, Info, Menu, Percent, Sparkles, Store, Tag, X } from "lucide-react";
 import ProductCard from "@/components/ProductCard";
 import { CATEGORIES } from "@/lib/mock-data";
 import CategoryIcon from "@/components/CategoryIcon";
 import { cn } from "@/lib/utils";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { ProductRow, PromotionRow } from "@/lib/supabase/types";
+
+const MENU_ITEMS = [
+  { href: "/home", label: "Home", icon: HomeIcon },
+  { href: "/shops", label: "Shop", icon: Store },
+  { href: "/offers", label: "Offers", icon: Percent },
+  { href: "/assistant", label: "MamaFresh AI", icon: Sparkles, accent: true },
+  { href: "/about", label: "About", icon: Info },
+];
 
 const promos = [
   { title: "30% Flat Discount", copy: "Fresh produce, better prices for your everyday shop.", image: "/offers.png", tone: "bg-[#F2A51A] text-[#073729]" },
@@ -71,7 +79,29 @@ export default function OffersPage() {
           <nav className="hidden items-center gap-6 text-sm font-semibold text-gray-600 lg:flex"><Link href="/home" className="hover:text-[#16A34A]">Home</Link><Link href="/shops" className="hover:text-[#16A34A]">Shop</Link><Link href="/offers" className="text-[#16A34A]">Offers</Link><Link href="/assistant" className="flex items-center gap-1 hover:text-[#16A34A]"><Sparkles size={14} /> MamaFresh AI</Link><Link href="/about" className="hover:text-[#16A34A]">About</Link><Link href="/contact" className="hover:text-[#16A34A]">Contact</Link></nav>
           <div className="ml-auto"><button onClick={() => setShowMenu(!showMenu)} aria-label="Open menu" className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-[#073729] lg:hidden">{showMenu ? <X size={18} /> : <Menu size={18} />}</button></div>
         </div>
-        {showMenu && <nav className="border-t border-gray-100 px-5 py-3 lg:hidden"><div className="flex flex-wrap gap-5 text-sm font-semibold text-gray-600"><Link href="/home">Home</Link><Link href="/shops">Shop</Link><Link href="/offers">Offers</Link><Link href="/assistant" className="flex items-center gap-1 text-[#16A34A]"><Sparkles size={14} /> MamaFresh AI</Link><Link href="/about">About</Link></div></nav>}
+        {showMenu && (
+          <nav className="border-t border-gray-100 px-5 py-1 lg:hidden">
+            <div className="flex flex-col divide-y divide-gray-100">
+              {MENU_ITEMS.map(({ href, label, icon: Icon, accent }) => (
+                <Link
+                  key={href}
+                  href={href}
+                  onClick={() => setShowMenu(false)}
+                  className={cn(
+                    "flex items-center justify-between py-3 text-sm font-semibold",
+                    accent ? "text-[#16A34A]" : "text-gray-700"
+                  )}
+                >
+                  <span className="flex items-center gap-3">
+                    <Icon size={17} className={accent ? "text-[#16A34A]" : "text-gray-400"} />
+                    {label}
+                  </span>
+                  <ChevronRight size={16} className="text-gray-300" />
+                </Link>
+              ))}
+            </div>
+          </nav>
+        )}
       </header>
 
       <main className="mx-auto max-w-7xl space-y-8 px-4 py-5 sm:px-6 lg:px-8 lg:py-8">

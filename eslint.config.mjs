@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Separate Vite/Capacitor project with its own lint setup.
+    "mobile-app/**",
   ]),
 ]);
 

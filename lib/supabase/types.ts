@@ -96,6 +96,8 @@ export type OrderRow = {
   subtotal: number;
   delivery_fee: number;
   total: number;
+  promo_code: string | null;
+  discount_amount: number;
   refund_amount: number;
   refunded_at: string | null;
   seller_lat: number | null;
@@ -168,6 +170,7 @@ export type PromotionRow = {
   title: string;
   discount_percent: number;
   category_slug: string | null;
+  code: string | null;
   starts_at: string;
   ends_at: string;
   is_active: boolean;

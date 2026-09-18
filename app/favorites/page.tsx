@@ -1,12 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, Heart, ShoppingCart, ArrowRight } from "lucide-react";
-import { getDefaultProductImage } from "@/lib/mock-data";
 import CustomerSidebar from "@/components/CustomerSidebar";
+import ProductCard from "@/components/ProductCard";
 import { cn } from "@/lib/utils";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useFavorites } from "@/lib/hooks/useFavorites";
@@ -23,7 +22,7 @@ export default function FavoritesPage() {
   const router = useRouter();
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [visibleCount, setVisibleCount] = useState(8);
-  const { favoriteIds, toggle, isSignedIn, loading: favoritesLoading } = useFavorites();
+  const { favoriteIds, isSignedIn, loading: favoritesLoading } = useFavorites();
   const [products, setProducts] = useState<ProductRow[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -137,40 +136,10 @@ export default function FavoritesPage() {
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-8">
-            {visibleProducts.map((product) => {
-              return (
-                <article key={product.id} className="group relative">
-                  <Link href={`/products/${product.id}`} className="block">
-                    <div className="relative aspect-square overflow-hidden rounded-2xl bg-[#F2F5F0]">
-                      <Image
-                        src={product.image_url || getDefaultProductImage(product.name, product.category)}
-                        alt={product.name}
-                        fill
-                        className="object-contain p-5 transition-transform duration-300 group-hover:scale-105"
-                        sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
-                      />
-                      <button
-                        type="button"
-                        onClick={(event) => {
-                          event.preventDefault();
-                          toggle(product.id);
-                        }}
-                        aria-label={`Remove ${product.name} from favorites`}
-                        className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-gray-400 shadow-sm transition-colors hover:text-red-500"
-                      >
-                        <Heart size={17} className="fill-red-500 text-red-500" />
-                      </button>
-                    </div>
-                  </Link>
-                  <div className="pt-3 px-1">
-                    <h2 className="truncate text-sm font-bold text-gray-900">{product.name}</h2>
-                    <p className="mt-1 truncate text-xs text-gray-500">{product.seller_name}</p>
-                    <p className="mt-2 text-sm font-black text-[#073729]">KSh {product.price.toLocaleString("en-KE")}</p>
-                  </div>
-                </article>
-              );
-            })}
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+            {visibleProducts.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
           </div>
         )}
         {visibleCount < favoriteProducts.length && (

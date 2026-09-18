@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
-import { ChevronRight, Clock } from "lucide-react";
+import { ArrowRight, Clock, Package } from "lucide-react";
 import CustomerSidebar from "@/components/CustomerSidebar";
 import { cn } from "@/lib/utils";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -24,7 +25,8 @@ const getStatusLabel = (status: OrderRow["status"]) => {
   return status.charAt(0).toUpperCase() + status.slice(1);
 };
 
-type OrderWithRelations = OrderRow & { order_items: OrderItemRow[]; sellers: { name: string } | null };
+type OrderItemWithProduct = OrderItemRow & { products: { image_url: string } | null };
+type OrderWithRelations = OrderRow & { order_items: OrderItemWithProduct[]; sellers: { name: string } | null };
 
 export default function OrdersPage() {
   const [activeTab, setActiveTab] = useState<OrderTab>("all");
@@ -42,7 +44,7 @@ export default function OrdersPage() {
       }
       const { data } = await supabase
         .from("orders")
-        .select("*, order_items(*), sellers(name)")
+        .select("*, order_items(*, products(image_url)), sellers(name)")
         .eq("customer_id", user.id)
         .order("created_at", { ascending: false });
       if (active) {
@@ -72,20 +74,21 @@ export default function OrdersPage() {
             </div>
           </div>
 
-          <div className="mb-6 flex gap-2 overflow-x-auto border-b border-gray-200 pb-3">
+          <div className="mb-6 flex gap-6 overflow-x-auto border-b border-gray-200">
             {ORDER_TABS.map((tab) => (
               <button
                 key={tab.key}
                 type="button"
                 onClick={() => setActiveTab(tab.key)}
                 className={cn(
-                  "whitespace-nowrap rounded-full border px-4 py-2 text-xs font-bold transition-colors",
-                  activeTab === tab.key
-                    ? "border-[#073729] bg-[#073729] text-white"
-                    : "border-gray-200 bg-white text-gray-600 hover:border-[#073729] hover:text-[#073729]"
+                  "relative whitespace-nowrap pb-3 text-sm font-bold transition-colors",
+                  activeTab === tab.key ? "text-[#073729]" : "text-gray-400 hover:text-gray-600"
                 )}
               >
                 {tab.label}
+                {activeTab === tab.key && (
+                  <span className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-[#16A34A]" />
+                )}
               </button>
             ))}
           </div>
@@ -95,39 +98,48 @@ export default function OrdersPage() {
               {Array.from({ length: 3 }).map((_, i) => <div key={i} className="skeleton h-28 rounded-2xl" />)}
             </div>
           ) : (
-            <div className="space-y-4">
-              {filteredOrders.map((order) => (
-                <Link
-                  key={order.id}
-                  href={`/orders/${order.id}`}
-                  className="block rounded-2xl border border-gray-200 bg-white p-5 transition-shadow hover:shadow-md"
-                >
-                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="text-sm font-black text-gray-900">Order ID: {order.id.slice(0, 8).toUpperCase()}</p>
-                        <span className={cn(
-                          "rounded-full px-2.5 py-1 text-[10px] font-extrabold uppercase",
-                          order.status === "delivered" && "bg-lime-100 text-lime-700",
-                          order.status === "cancelled" && "bg-red-100 text-red-700",
-                          IN_PROGRESS_STATUSES.includes(order.status) && "bg-amber-100 text-amber-700"
-                        )}>
-                          {getStatusLabel(order.status)}
-                        </span>
-                      </div>
-                      <p className="mt-2 text-xs text-gray-500">{new Date(order.created_at).toLocaleString()}</p>
-                      <p className="mt-3 text-sm text-gray-700">
-                        {order.order_items.map((item) => `${item.quantity}x ${item.product_name}`).join(" | ")}
-                      </p>
-                      <p className="mt-1 text-xs font-semibold text-[#16A34A]">{order.sellers?.name ?? "MamaFresh seller"}</p>
+            <div className="space-y-3">
+              {filteredOrders.map((order) => {
+                const firstItem = order.order_items[0];
+                const extraCount = order.order_items.length - 1;
+                return (
+                  <div key={order.id} className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-white p-3.5">
+                    <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-[#EAF7EE]">
+                      {firstItem?.products?.image_url ? (
+                        <Image src={firstItem.products.image_url} alt={firstItem.product_name} fill className="object-contain p-2" sizes="64px" />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-gray-300"><Package size={24} /></div>
+                      )}
                     </div>
-                    <div className="flex items-center justify-between gap-5 sm:flex-col sm:items-end">
-                      <p className="text-base font-black text-[#073729]">KSh {order.total.toLocaleString("en-KE")}</p>
-                      <ChevronRight size={18} className="text-[#073729]" />
+
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-bold text-gray-900">Transaction ID: <span className="font-black">{order.id.slice(0, 8).toUpperCase()}</span></p>
+                      <p className="mt-0.5 text-[11px] text-gray-400">Placed: {new Date(order.created_at).toLocaleDateString()}</p>
+                      <p className="mt-0.5 truncate text-[11px] text-gray-500">
+                        {firstItem ? `${firstItem.quantity}x ${firstItem.product_name}` : ""}{extraCount > 0 ? ` +${extraCount} more` : ""}
+                      </p>
+                      <p className="mt-1 text-sm font-black text-[#073729]">KSh {order.total.toLocaleString("en-KE")}</p>
+                    </div>
+
+                    <div className="flex shrink-0 flex-col items-end gap-2">
+                      <span className={cn(
+                        "rounded-full px-2.5 py-1 text-[10px] font-extrabold uppercase",
+                        order.status === "delivered" && "bg-lime-100 text-lime-700",
+                        order.status === "cancelled" && "bg-red-100 text-red-700",
+                        IN_PROGRESS_STATUSES.includes(order.status) && "bg-amber-100 text-amber-700"
+                      )}>
+                        {getStatusLabel(order.status)}
+                      </span>
+                      <Link
+                        href={`/orders/${order.id}`}
+                        className="flex items-center gap-1 rounded-full bg-[#073729] px-3 py-1.5 text-[11px] font-bold text-white hover:bg-[#0B3D2E]"
+                      >
+                        Track Order <ArrowRight size={11} />
+                      </Link>
                     </div>
                   </div>
-                </Link>
-              ))}
+                );
+              })}
               {filteredOrders.length === 0 && (
                 <div className="rounded-2xl border border-dashed border-gray-200 bg-white py-14 text-center">
                   <Clock size={28} className="mx-auto mb-2 text-gray-300" />

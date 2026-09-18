@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseApiClient, withCors } from "@/lib/supabase/server";
 import { runGroqWithTools, type GroqMessage } from "@/lib/assistant/groq";
 import { CUSTOMER_TOOLS, CUSTOMER_SYSTEM_PROMPT } from "@/lib/assistant/customer-tools";
 import type { ProductRow } from "@/lib/supabase/types";
@@ -7,15 +7,23 @@ import type { ProductRow } from "@/lib/supabase/types";
 type Message = { role: "user" | "assistant"; content: string };
 type ShoppingListItem = ProductRow & { quantity: number };
 
-export async function POST(request: Request) {
-  const supabase = await createSupabaseServerClient();
-  if (!supabase) return NextResponse.json({ error: "Supabase is not configured." }, { status: 503 });
+function json(body: unknown, init?: ResponseInit) {
+  return withCors(NextResponse.json(body, init)) as NextResponse;
+}
 
-  const { data: { user } } = await supabase.auth.getUser();
+export async function OPTIONS() {
+  return withCors(new NextResponse(null, { status: 204 }));
+}
+
+export async function POST(request: Request) {
+  const { supabase, getUser } = await createSupabaseApiClient(request);
+  if (!supabase) return json({ error: "Supabase is not configured." }, { status: 503 });
+
+  const user = await getUser();
   const body = await request.json() as { messages?: Message[]; conversationId?: string };
   const messages = body.messages?.slice(-12) ?? [];
   const latest = messages.at(-1)?.content?.trim();
-  if (!latest) return NextResponse.json({ error: "Message is required." }, { status: 400 });
+  if (!latest) return json({ error: "Message is required." }, { status: 400 });
 
   try {
     const { content, data } = await runGroqWithTools({
@@ -86,9 +94,9 @@ export async function POST(request: Request) {
       }
     }
 
-    return NextResponse.json({ content, items: (data as ShoppingListItem[] | undefined) ?? [], conversationId });
+    return json({ content, items: (data as ShoppingListItem[] | undefined) ?? [], conversationId });
   } catch (error) {
     console.error("[api/assistant] request failed:", error);
-    return NextResponse.json({ error: error instanceof Error ? error.message : "The assistant could not respond." }, { status: 502 });
+    return json({ error: error instanceof Error ? error.message : "The assistant could not respond." }, { status: 502 });
   }
 }

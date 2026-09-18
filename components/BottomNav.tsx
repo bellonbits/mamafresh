@@ -3,17 +3,15 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSyncExternalStore } from "react";
-import { Home, Store, Heart, ShoppingCart, Truck, User } from "lucide-react";
+import { Home, Heart, ShoppingCart, FileText, User } from "lucide-react";
 import { useCartStore } from "@/lib/store/cart";
 import { cn } from "@/lib/utils";
 
-const NAV_ITEMS = [
-  { href: "/home",      label: "Home",      icon: Home },
-  { href: "/shops",     label: "Shops",     icon: Store },
-  { href: "/favorites", label: "Favorites", icon: Heart },
-  { href: "/cart",      label: "Cart",      icon: ShoppingCart, isCart: true },
-  { href: "/orders",    label: "Orders",    icon: Truck },
-  { href: "/account",   label: "Account",   icon: User },
+const SIDE_ITEMS = [
+  { href: "/home",      label: "Home",     icon: Home },
+  { href: "/favorites", label: "Favorite", icon: Heart },
+  { href: "/orders",    label: "Order",    icon: FileText },
+  { href: "/account",   label: "Account",  icon: User },
 ];
 
 export default function BottomNav() {
@@ -24,59 +22,65 @@ export default function BottomNav() {
     () => false
   );
   const totalItems = useCartStore((s) => s.getTotalItems());
+  const cartActive = path.startsWith("/cart");
 
   // Only hide on internal seller/admin dashboards and full-screen pages (AI chat, messaging)
   if (path.startsWith("/seller") || path.startsWith("/admin") || path === "/assistant" || path.startsWith("/messages")) {
     return null;
   }
 
+  const [left, right] = [SIDE_ITEMS.slice(0, 2), SIDE_ITEMS.slice(2)];
+
+  const renderItem = ({ href, label, icon: Icon }: (typeof SIDE_ITEMS)[number]) => {
+    const active =
+      path === href ||
+      (href === "/home" && (path === "/home" || path === "/")) ||
+      (href === "/account" && path.startsWith("/account")) ||
+      (href === "/orders" && path.startsWith("/orders")) ||
+      (href === "/favorites" && path.startsWith("/favorites"));
+
+    return (
+      <Link
+        key={href}
+        href={href}
+        id={`bottom-nav-${label.toLowerCase()}`}
+        aria-label={label}
+        className="relative flex w-14 flex-col items-center justify-center gap-1 py-1 transition-transform active:scale-90"
+      >
+        <Icon size={19} strokeWidth={active ? 2.4 : 2} className={active ? "text-[#16A34A]" : "text-gray-400"} />
+        <span className={cn("text-[10px] font-bold", active ? "text-[#16A34A]" : "text-gray-400")}>
+          {label}
+        </span>
+      </Link>
+    );
+  };
+
   return (
     <nav
       aria-label="Bottom Navigation"
-      className="bottom-nav fixed bottom-3 left-1/2 -translate-x-1/2 w-[94%] max-w-[420px] z-40 bg-[#073729]/95 backdrop-blur-lg rounded-full border border-emerald-800/60 shadow-[0_12px_35px_rgba(0,0,0,0.28)] px-2.5 py-1.5 flex items-center justify-between transition-all"
+      className="bottom-nav fixed bottom-0 left-0 z-40 w-full bg-white px-2 pt-2 shadow-[0_-8px_25px_rgba(0,0,0,0.05)]"
+      style={{ paddingBottom: "calc(0.5rem + env(safe-area-inset-bottom))" }}
     >
-      {NAV_ITEMS.map(({ href, label, icon: Icon, isCart }) => {
-        const active =
-          path === href ||
-          (href !== "/home" && path.startsWith(href)) ||
-          (href === "/home" && (path === "/home" || path === "/"));
+      <div className="relative flex items-center justify-around">
+        {left.map(renderItem)}
 
-        return (
-          <Link
-            key={href}
-            href={href}
-            id={`bottom-nav-${label.toLowerCase()}`}
-            aria-label={label}
-            className={cn(
-              "relative w-11 h-11 rounded-full flex flex-col items-center justify-center transition-all duration-200 active:scale-90",
-              active
-                ? "bg-[#84CC16] text-[#073729] shadow-md scale-105"
-                : "text-emerald-200/80 hover:text-white hover:bg-white/10"
-            )}
-          >
-            <Icon
-              size={18}
-              strokeWidth={active ? 2.5 : 2}
-              fill={active && (label === "Home" || label === "Favorites") ? "currentColor" : "none"}
-            />
-            <span
-              className={cn(
-                "text-[9px] font-extrabold tracking-tight mt-0.5 leading-none",
-                active ? "text-[#073729]" : "text-emerald-200/70"
-              )}
-            >
-              {label}
+        {/* Raised cart FAB */}
+        <Link
+          href="/cart"
+          id="bottom-nav-cart"
+          aria-label="Cart"
+          className="relative -mt-8 flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full bg-[#16A34A] text-white shadow-[0_8px_20px_rgba(22,163,74,0.45)] transition-transform active:scale-90"
+        >
+          <ShoppingCart size={22} strokeWidth={cartActive ? 2.4 : 2} />
+          {hydrated && totalItems > 0 && (
+            <span className="absolute -top-1 right-0 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#E84919] px-1 text-[10px] font-black text-white ring-2 ring-white">
+              {totalItems}
             </span>
+          )}
+        </Link>
 
-            {/* Cart Badge */}
-            {isCart && hydrated && totalItems > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-black flex items-center justify-center shadow-xs border border-[#073729]">
-                {totalItems}
-              </span>
-            )}
-          </Link>
-        );
-      })}
+        {right.map(renderItem)}
+      </div>
     </nav>
   );
 }

@@ -44,7 +44,7 @@ function maskPhone(phone: string): string {
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { items, sellerId, getTotalPrice, clearCart } = useCartStore();
+  const { items, sellerId, getTotalPrice, clearCart, appliedPromo, getDiscountAmount } = useCartStore();
   const [seller, setSeller] = useState<SellerRow | null>(null);
   const [deliverySlot, setDeliverySlot] = useState<DeliverySlot>("asap");
   const [orderType, setOrderType] = useState<"delivery" | "pickup">("delivery");
@@ -93,7 +93,8 @@ export default function CheckoutPage() {
 
   const subtotal = getTotalPrice();
   const deliveryFee = orderType === "delivery" ? (seller?.delivery_fee ?? 50) : 0;
-  const grandTotal = Math.max(0, subtotal + deliveryFee);
+  const discount = getDiscountAmount();
+  const grandTotal = Math.max(0, subtotal + deliveryFee - discount);
 
   const handleUseCurrentAddress = async () => {
     const label = await detectCurrentLocation();
@@ -120,6 +121,7 @@ export default function CheckoutPage() {
           orderType,
           paymentMethod,
           notes: instructions,
+          promoCode: appliedPromo?.code ?? null,
         }),
       });
       const result = await response.json() as { order?: { id: string }; error?: string };
@@ -218,6 +220,12 @@ export default function CheckoutPage() {
         <span>Delivery Fee</span>
         <span className="font-bold text-gray-900">{formatKSh(deliveryFee)}</span>
       </div>
+      {discount > 0 && (
+        <div className="flex justify-between text-[#16A34A]">
+          <span>Discount ({appliedPromo?.code})</span>
+          <span className="font-bold">-{formatKSh(discount)}</span>
+        </div>
+      )}
       <div className="flex justify-between text-sm font-black text-[#073729] pt-2 border-t border-gray-100">
         <span>Total Payable</span>
         <span>{formatKSh(grandTotal)}</span>
@@ -506,7 +514,7 @@ export default function CheckoutPage() {
         </aside>
 
         {/* Sticky Bottom Place Order CTA — mobile only */}
-        <div className="fixed bottom-0 left-0 w-full bg-white border-t border-gray-100 p-4 shadow-[0_-8px_25px_rgba(0,0,0,0.06)] z-40 lg:hidden">
+        <div className="above-bottom-nav fixed left-0 w-full bg-white border-t border-gray-100 p-4 shadow-[0_-8px_25px_rgba(0,0,0,0.06)] z-40 lg:hidden">
           {placeOrderButton}
         </div>
       </form>

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowLeft, Search, X, SearchX } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { CATEGORIES } from "@/lib/mock-data";
+import CategoryIcon from "@/components/CategoryIcon";
 import ProductCard from "@/components/ProductCard";
 import SellerCard from "@/components/SellerCard";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -95,9 +96,9 @@ export default function SearchPage() {
                 <Link
                   key={cat.id}
                   href={`/categories/${cat.slug}`}
-                  className="flex items-center gap-2 p-3 bg-white rounded-xl shadow-card"
+                  className="flex items-center gap-2.5 p-3 bg-white rounded-xl shadow-card"
                 >
-                  <span className="text-xl">{cat.icon}</span>
+                  <CategoryIcon slug={cat.slug} size={36} />
                   <span className="text-sm font-medium text-gray-700">{cat.name}</span>
                 </Link>
               ))}

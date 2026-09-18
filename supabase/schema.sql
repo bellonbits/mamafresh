@@ -235,6 +235,7 @@ create policy "Public can read sellers" on public.sellers for select
   using (status not in ('draft', 'rejected') or owner_id = auth.uid() or public.is_admin());
 do $$ begin create policy "Sellers apply for their own stall" on public.sellers for insert with check (owner_id = auth.uid()); exception when duplicate_object then null; end $$;
 do $$ begin create policy "Sellers manage their own stall" on public.sellers for update using (owner_id = auth.uid() or public.is_admin()) with check (owner_id = auth.uid() or public.is_admin()); exception when duplicate_object then null; end $$;
+do $$ begin create policy "Admins delete sellers" on public.sellers for delete using (public.is_admin()); exception when duplicate_object then null; end $$;
 do $$ begin create policy "Sellers manage their own products" on public.products for all using (exists (select 1 from public.sellers where id = seller_id and owner_id = auth.uid())) with check (exists (select 1 from public.sellers where id = seller_id and owner_id = auth.uid())); exception when duplicate_object then null; end $$;
 do $$ begin create policy "Users can read their profile" on public.profiles for select using (id = auth.uid() or public.is_admin()); exception when duplicate_object then null; end $$;
 do $$ begin create policy "Users can update their profile" on public.profiles for update using (id = auth.uid()) with check (id = auth.uid()); exception when duplicate_object then null; end $$;
@@ -242,6 +243,7 @@ do $$ begin create policy "Users manage their addresses" on public.addresses for
 do $$ begin create policy "Customers read their orders" on public.orders for select using (customer_id = auth.uid() or public.is_admin() or exists (select 1 from public.sellers where id = seller_id and owner_id = auth.uid())); exception when duplicate_object then null; end $$;
 do $$ begin create policy "Customers create orders" on public.orders for insert with check (customer_id = auth.uid()); exception when duplicate_object then null; end $$;
 do $$ begin create policy "Order owners update status" on public.orders for update using (customer_id = auth.uid() or public.is_admin() or exists (select 1 from public.sellers where id = seller_id and owner_id = auth.uid())); exception when duplicate_object then null; end $$;
+do $$ begin create policy "Admins delete orders" on public.orders for delete using (public.is_admin()); exception when duplicate_object then null; end $$;
 do $$ begin create policy "Order participants read items" on public.order_items for select using (exists (select 1 from public.orders o where o.id = order_id and (o.customer_id = auth.uid() or public.is_admin() or exists (select 1 from public.sellers s where s.id = o.seller_id and s.owner_id = auth.uid())))); exception when duplicate_object then null; end $$;
 do $$ begin create policy "Customers create items" on public.order_items for insert with check (exists (select 1 from public.orders o where o.id = order_id and o.customer_id = auth.uid())); exception when duplicate_object then null; end $$;
 do $$ begin create policy "Users manage favorites" on public.favorites for all using (user_id = auth.uid()) with check (user_id = auth.uid()); exception when duplicate_object then null; end $$;
@@ -534,11 +536,15 @@ create table if not exists public.promotions (
   title text not null,
   discount_percent int not null check (discount_percent between 1 and 100),
   category_slug text,
+  code text,
   starts_at date not null,
   ends_at date not null,
   is_active boolean not null default true,
   created_at timestamptz not null default now()
 );
+
+alter table public.promotions add column if not exists code text;
+create unique index if not exists promotions_code_unique_idx on public.promotions (upper(code)) where code is not null;
 
 alter table public.promotions enable row level security;
 do $$ begin create policy "Anyone reads active promotions" on public.promotions for select using (is_active = true or public.is_admin()); exception when duplicate_object then null; end $$;
@@ -614,3 +620,9 @@ do $$ begin alter publication supabase_realtime add table public.product_images;
 alter table public.orders add column if not exists seller_lat numeric;
 alter table public.orders add column if not exists seller_lng numeric;
 alter table public.orders add column if not exists seller_location_updated_at timestamptz;
+
+-- ── Promo code redemption ────────────────────────────────────────────────
+-- The discount is re-validated and recomputed server-side at order creation
+-- (never trusted from the client), then stored here for the receipt/history.
+alter table public.orders add column if not exists promo_code text;
+alter table public.orders add column if not exists discount_amount numeric not null default 0;

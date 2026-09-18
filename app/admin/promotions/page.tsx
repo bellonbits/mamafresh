@@ -18,6 +18,7 @@ export default function AdminPromotionsPage() {
   const [title, setTitle] = useState("");
   const [discount, setDiscount] = useState("10");
   const [categorySlug, setCategorySlug] = useState("");
+  const [code, setCode] = useState("");
   const [startsAt, setStartsAt] = useState("");
   const [endsAt, setEndsAt] = useState("");
 
@@ -56,14 +57,14 @@ export default function AdminPromotionsPage() {
     setSaving(true);
     const { data, error } = await getSupabaseBrowserClient()
       .from("promotions")
-      .insert({ title: title.trim(), discount_percent: Number(discount), category_slug: categorySlug || null, starts_at: startsAt, ends_at: endsAt })
+      .insert({ title: title.trim(), discount_percent: Number(discount), category_slug: categorySlug || null, code: code.trim() ? code.trim().toUpperCase() : null, starts_at: startsAt, ends_at: endsAt })
       .select("*")
       .single();
     setSaving(false);
-    if (error) { notify(error.message); return; }
+    if (error) { notify(error.code === "23505" ? "That promo code is already in use." : error.message); return; }
     setPromotions((current) => [data as PromotionRow, ...current]);
     setCreating(false);
-    setTitle(""); setDiscount("10"); setCategorySlug(""); setStartsAt(""); setEndsAt("");
+    setTitle(""); setDiscount("10"); setCategorySlug(""); setCode(""); setStartsAt(""); setEndsAt("");
     notify("Promotion created and live on the Offers page.");
   };
 
@@ -110,6 +111,7 @@ export default function AdminPromotionsPage() {
                     </span>
                   </div>
                   <p className="text-xs text-gray-400">{p.discount_percent}% off {p.category_slug ? `· ${p.category_slug}` : "· all categories"} · {p.starts_at} to {p.ends_at}</p>
+                  {p.code && <p className="mt-0.5 text-[11px] font-bold text-[#16A34A]">Code: {p.code}</p>}
                 </div>
                 <button onClick={() => void toggleActive(p)} aria-label={p.is_active ? "Pause" : "Activate"} className="rounded-lg bg-gray-50 p-2 text-gray-500 hover:bg-gray-100"><Power size={14} /></button>
                 <button onClick={() => void deletePromotion(p)} aria-label="Delete" className="rounded-lg bg-red-50 p-2 text-red-500 hover:bg-red-100"><Trash2 size={14} /></button>
@@ -128,6 +130,11 @@ export default function AdminPromotionsPage() {
             </div>
             <label className="block text-xs font-bold text-gray-700">Title<input required value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Weekend Fresh Deals" className="mt-1 w-full rounded-xl border border-gray-200 p-2.5 text-sm" /></label>
             <label className="block text-xs font-bold text-gray-700">Discount %<input required type="number" min={1} max={100} value={discount} onChange={(e) => setDiscount(e.target.value)} className="mt-1 w-full rounded-xl border border-gray-200 p-2.5 text-sm" /></label>
+            <label className="block text-xs font-bold text-gray-700">
+              Promo code (optional)
+              <input value={code} onChange={(e) => setCode(e.target.value)} placeholder="e.g. FRESH10" className="mt-1 w-full rounded-xl border border-gray-200 p-2.5 text-sm uppercase" />
+              <span className="mt-1 block text-[10px] font-normal text-gray-400">If set, customers can redeem this exact code at checkout — otherwise it just applies automatically to Offers.</span>
+            </label>
             <label className="block text-xs font-bold text-gray-700">
               Category (optional)
               <select value={categorySlug} onChange={(e) => setCategorySlug(e.target.value)} className="mt-1 w-full rounded-xl border border-gray-200 p-2.5 text-sm">

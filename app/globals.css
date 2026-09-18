@@ -162,6 +162,17 @@ input[type="number"]::-webkit-outer-spin-button {
   padding-bottom: calc(72px + env(safe-area-inset-bottom));
 }
 
+/* For fixed bottom bars (cart/checkout/product CTAs) that must sit above the
+   fixed BottomNav instead of underneath it — same offset as .pb-nav. */
+.above-bottom-nav {
+  bottom: calc(72px + env(safe-area-inset-bottom));
+}
+@media (min-width: 1024px) {
+  .above-bottom-nav {
+    bottom: 0;
+  }
+}
+
 /* Green header */
 .header-green {
   background-color: #0B3D2E;

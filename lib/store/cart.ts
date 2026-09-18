@@ -10,15 +10,24 @@ export interface CartItem {
   quantity: number;
 }
 
+export interface AppliedPromo {
+  code: string;
+  discountPercent: number;
+  title: string;
+}
+
 interface CartStore {
   items: CartItem[];
   sellerId: string | null;
+  appliedPromo: AppliedPromo | null;
   addItem: (product: ProductRow, qty?: number) => { conflict: boolean };
   removeItem: (productId: string) => void;
   updateQty: (productId: string, qty: number) => void;
   clearCart: () => void;
+  setAppliedPromo: (promo: AppliedPromo | null) => void;
   getTotalItems: () => number;
   getTotalPrice: () => number;
+  getDiscountAmount: () => number;
 }
 
 export const useCartStore = create<CartStore>()(
@@ -26,6 +35,7 @@ export const useCartStore = create<CartStore>()(
     (set, get) => ({
       items: [],
       sellerId: null,
+      appliedPromo: null,
 
       addItem: (product, qty = 1) => {
         const { items, sellerId } = get();
@@ -58,6 +68,7 @@ export const useCartStore = create<CartStore>()(
         set({
           items: newItems,
           sellerId: newItems.length === 0 ? null : get().sellerId,
+          appliedPromo: newItems.length === 0 ? null : get().appliedPromo,
         });
       },
 
@@ -73,7 +84,9 @@ export const useCartStore = create<CartStore>()(
         });
       },
 
-      clearCart: () => set({ items: [], sellerId: null }),
+      clearCart: () => set({ items: [], sellerId: null, appliedPromo: null }),
+
+      setAppliedPromo: (promo) => set({ appliedPromo: promo }),
 
       getTotalItems: () =>
         get().items.reduce((sum, i) => sum + i.quantity, 0),
@@ -83,6 +96,12 @@ export const useCartStore = create<CartStore>()(
           (sum, i) => sum + i.product.price * i.quantity,
           0
         ),
+
+      getDiscountAmount: () => {
+        const { appliedPromo } = get();
+        if (!appliedPromo) return 0;
+        return Math.round(get().getTotalPrice() * (appliedPromo.discountPercent / 100));
+      },
     }),
     { name: "mamafresh-cart-v3" }
   )

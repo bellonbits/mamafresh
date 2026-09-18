@@ -345,16 +345,97 @@ export default function AccountPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F0F2F5] text-slate-800 p-3 sm:p-5 lg:p-7 antialiased font-sans">
+    <div className="bg-[#F0F2F5] text-slate-800 p-3 sm:p-5 lg:p-7 antialiased font-sans">
       {/* Desktop Dashboard Canvas */}
       <div className="max-w-[1440px] mx-auto bg-transparent flex flex-col lg:flex-row gap-5 lg:gap-6 items-start relative">
 
         {/* ══════════════════════════════════════════════════════════════
-            LEFT SIDEBAR (With Logo replacing "grocery" & Customer Tabs)
+            MOBILE ACCOUNT HEADER + NAV LIST (hidden on desktop)
+        ══════════════════════════════════════════════════════════════ */}
+        <div className="w-full space-y-3 lg:hidden">
+          <div className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+            <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-full bg-amber-200 flex items-center justify-center text-sm font-black text-amber-800">
+              {profile.avatarUrl ? (
+                <Image src={profile.avatarUrl} alt={profile.name} fill className="object-cover" sizes="56px" />
+              ) : (
+                (profile.name || "M").slice(0, 1).toUpperCase()
+              )}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-base font-black text-slate-900">{profile.name || "Welcome"}</p>
+              <p className="truncate text-xs text-slate-400">{profile.phone || profile.email || "Complete your profile"}</p>
+            </div>
+            <div className="relative shrink-0">
+              <button
+                onClick={() => setShowNotifications(!showNotifications)}
+                aria-label="Notifications"
+                className="relative flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-slate-500"
+              >
+                <Bell size={17} />
+                {activeOrders.length > 0 && <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#E84919] px-1 text-[9px] font-bold text-white">{activeOrders.length}</span>}
+              </button>
+
+              {showNotifications && (
+                <div className="absolute right-0 z-40 mt-2 w-72 animate-fade-in rounded-2xl border border-slate-100 bg-white p-3.5 text-slate-800 shadow-xl">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                    <p className="text-xs font-bold text-[#073729]">Active orders</p>
+                    <button onClick={() => setShowNotifications(false)} className="text-slate-400 hover:text-slate-600">
+                      <X size={14} />
+                    </button>
+                  </div>
+                  <div className="mt-2 space-y-2 text-xs">
+                    {activeOrders.length === 0 ? (
+                      <p className="py-2 text-center text-slate-400">No active orders right now.</p>
+                    ) : activeOrders.map((order) => (
+                      <Link key={order.id} href={`/orders/${order.id}`} className="block cursor-pointer rounded-xl bg-slate-50 p-2 hover:bg-emerald-50">
+                        <p className="font-bold text-emerald-700">{order.sellers?.name ?? "Order"} · {order.status.replace(/_/g, " ")}</p>
+                        <p className="text-[11px] text-slate-500">#{order.id.slice(0, 8).toUpperCase()} · {formatKSh(order.total)}</p>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <nav className="divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
+            {customerNavItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => handleNavClick(item.id)}
+                  className="flex w-full items-center justify-between px-4 py-3.5 text-left text-sm font-semibold text-slate-700"
+                >
+                  <span className="flex items-center gap-3">
+                    <Icon size={17} className="text-slate-400" />
+                    {item.label}
+                  </span>
+                  <span className="flex items-center gap-2">
+                    {navBadges[item.id] > 0 && (
+                      <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-black text-[#073729]">{navBadges[item.id]}</span>
+                    )}
+                    <ChevronRight size={16} className="text-slate-300" />
+                  </span>
+                </button>
+              );
+            })}
+            <button
+              onClick={() => setLogoutModalOpen(true)}
+              className="flex w-full items-center justify-between px-4 py-3.5 text-left text-sm font-semibold text-rose-500"
+            >
+              <span className="flex items-center gap-3"><LogOut size={17} /> Log out</span>
+              <ChevronRight size={16} className="text-rose-300" />
+            </button>
+          </nav>
+        </div>
+
+        {/* ══════════════════════════════════════════════════════════════
+            LEFT SIDEBAR (Desktop only — With Logo replacing "grocery" & Customer Tabs)
         ══════════════════════════════════════════════════════════════ */}
         <aside
           className={cn(
-            "bg-white rounded-3xl p-5 shadow-sm border border-slate-100 flex flex-col justify-between transition-all duration-300 relative z-20 w-full lg:min-h-[920px]",
+            "hidden bg-white rounded-3xl p-5 shadow-sm border border-slate-100 lg:flex flex-col justify-between transition-all duration-300 relative z-20 w-full lg:min-h-[920px]",
             sidebarCollapsed ? "lg:w-20" : "lg:w-[270px]"
           )}
         >
@@ -548,8 +629,8 @@ export default function AccountPage() {
         ══════════════════════════════════════════════════════════════ */}
         <div className="flex-1 w-full space-y-6">
 
-          {/* ── TOP HEADER BAR (Dark Emerald Green Container) ── */}
-          <header className="bg-[#073729] rounded-2xl px-5 sm:px-7 py-3.5 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 shadow-sm text-white">
+          {/* ── TOP HEADER BAR (Dark Emerald Green Container) — desktop only, mobile has its own compact header above ── */}
+          <header className="hidden lg:flex bg-[#073729] rounded-2xl px-5 sm:px-7 py-3.5 flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 shadow-sm text-white">
             {/* Search Pill */}
             <div className="relative w-full sm:w-80">
               <input
@@ -614,20 +695,20 @@ export default function AccountPage() {
           </header>
 
           {/* ── HEADING & BREADCRUMB ── */}
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
               <h1 className="text-xl sm:text-2xl font-black text-[#073729] tracking-tight">
                 My Account
               </h1>
-              <p className="text-xs text-slate-400 font-medium mt-0.5">
+              <p className="hidden text-xs text-slate-400 font-medium mt-0.5 sm:block">
                 Manage your profile, orders, addresses, and favorites
               </p>
             </div>
             <Link
               href="/home"
-              className="text-xs font-bold text-[#073729] hover:text-emerald-700 bg-white border border-slate-200 px-3.5 py-1.5 rounded-full transition-colors shadow-2xs"
+              className="flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-bold text-[#073729] transition-colors hover:text-emerald-700 shadow-2xs"
             >
-              ← Back to Shop
+              <ChevronLeft size={13} /> Shop
             </Link>
           </div>
 
@@ -1095,18 +1176,6 @@ export default function AccountPage() {
               <LogOut size={16} />
               Log out
             </button>
-          </div>
-
-          {/* Footer */}
-          <div className="pt-4 pb-12 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400 gap-2">
-            <p>© {new Date().getFullYear()} MamaFresh. All rights reserved.</p>
-            <div className="flex items-center gap-4">
-              <Link href="/help" className="hover:text-[#073729] transition-colors">Help & Support</Link>
-              <span>·</span>
-              <Link href="/about" className="hover:text-[#073729] transition-colors">About Us</Link>
-              <span>·</span>
-              <Link href="/seller" className="hover:text-[#073729] transition-colors">Sell on MamaFresh</Link>
-            </div>
           </div>
 
         </div>

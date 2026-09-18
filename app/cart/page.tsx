@@ -14,16 +14,22 @@ import {
   MapPin,
   ShoppingBag,
   ArrowRight,
+  Tag,
+  X,
 } from "lucide-react";
 import { useCartStore } from "@/lib/store/cart";
 import { cn, formatKSh } from "@/lib/utils";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { validatePromoCode } from "@/lib/promo";
 import type { SellerRow } from "@/lib/supabase/types";
 
 export default function CartPage() {
   const router = useRouter();
-  const { items, updateQty, removeItem, getTotalPrice, sellerId } = useCartStore();
+  const { items, updateQty, removeItem, getTotalPrice, sellerId, appliedPromo, setAppliedPromo, getDiscountAmount } = useCartStore();
   const [seller, setSeller] = useState<SellerRow | null>(null);
+  const [promoInput, setPromoInput] = useState("");
+  const [promoError, setPromoError] = useState<string | null>(null);
+  const [applyingPromo, setApplyingPromo] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -43,7 +49,22 @@ export default function CartPage() {
 
   const subtotal = getTotalPrice();
   const deliveryFee = orderType === "delivery" ? (seller?.delivery_fee ?? 50) : 0;
-  const total = subtotal + deliveryFee;
+  const discount = getDiscountAmount();
+  const total = Math.max(0, subtotal + deliveryFee - discount);
+
+  const applyPromo = async () => {
+    if (!promoInput.trim()) return;
+    setApplyingPromo(true);
+    setPromoError(null);
+    const result = await validatePromoCode(getSupabaseBrowserClient(), promoInput);
+    setApplyingPromo(false);
+    if ("error" in result) {
+      setPromoError(result.error);
+      return;
+    }
+    setAppliedPromo(result.promo);
+    setPromoInput("");
+  };
 
   if (items.length === 0) {
     return (
@@ -125,6 +146,54 @@ export default function CartPage() {
     </div>
   );
 
+  const promoCard = (
+    <div className="bg-white rounded-2xl p-3.5 border border-gray-100 shadow-xs space-y-2">
+      <h3 className="text-xs font-extrabold text-[#073729] uppercase tracking-wider">
+        Promo Code
+      </h3>
+      {appliedPromo ? (
+        <div className="flex items-center justify-between rounded-xl bg-gray-100 pl-3 pr-1.5 py-1.5">
+          <div className="min-w-0">
+            <p className="text-xs font-bold text-gray-500 truncate">{appliedPromo.title} · {appliedPromo.discountPercent}% off</p>
+          </div>
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            <span className="rounded-full bg-[#073729] px-3 py-1.5 text-xs font-black text-white">{appliedPromo.code}</span>
+            <button
+              onClick={() => setAppliedPromo(null)}
+              aria-label="Remove promo code"
+              className="flex h-6 w-6 items-center justify-center rounded-full text-gray-400 hover:text-red-500"
+            >
+              <X size={13} />
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-2">
+            <div className="flex-1 flex items-center gap-1.5 rounded-xl border border-gray-200 px-3 py-2">
+              <Tag size={13} className="text-gray-400 flex-shrink-0" />
+              <input
+                value={promoInput}
+                onChange={(e) => { setPromoInput(e.target.value); setPromoError(null); }}
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void applyPromo(); } }}
+                placeholder="Enter code"
+                className="w-full min-w-0 bg-transparent text-xs font-bold uppercase text-gray-900 placeholder:font-normal placeholder:normal-case placeholder:text-gray-400 outline-hidden"
+              />
+            </div>
+            <button
+              onClick={() => void applyPromo()}
+              disabled={applyingPromo || !promoInput.trim()}
+              className="flex-shrink-0 rounded-xl bg-[#073729] px-4 py-2 text-xs font-black text-white active:scale-95 disabled:opacity-40"
+            >
+              {applyingPromo ? "..." : "Apply Code"}
+            </button>
+          </div>
+          {promoError && <p className="text-[10px] font-bold text-red-500">{promoError}</p>}
+        </div>
+      )}
+    </div>
+  );
+
   const summaryLines = (
     <div className="space-y-1 text-xs">
       <div className="flex justify-between text-gray-500">
@@ -132,9 +201,15 @@ export default function CartPage() {
         <span className="font-bold text-gray-900">{formatKSh(subtotal)}</span>
       </div>
       <div className="flex justify-between text-gray-500">
-        <span>Delivery Fee</span>
+        <span>Shipping Fee</span>
         <span className="font-bold text-gray-900">{formatKSh(deliveryFee)}</span>
       </div>
+      {discount > 0 && (
+        <div className="flex justify-between text-[#16A34A]">
+          <span>Discount ({appliedPromo?.code})</span>
+          <span className="font-bold">-{formatKSh(discount)}</span>
+        </div>
+      )}
       <div className="flex justify-between text-sm font-black text-[#073729] pt-1 border-t border-gray-100">
         <span>Total</span>
         <span>{formatKSh(total)}</span>
@@ -164,30 +239,38 @@ export default function CartPage() {
             return (
               <div
                 key={product.id}
-                className="bg-white rounded-2xl p-3.5 border border-gray-100 shadow-xs flex items-center justify-between gap-3"
+                className="relative bg-white rounded-2xl p-3.5 border border-gray-100 shadow-xs flex items-center gap-3"
               >
-                {/* Product Thumbnail */}
-                <div className="relative w-16 h-16 rounded-xl bg-gray-50 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                <button
+                  onClick={() => removeItem(product.id)}
+                  aria-label="Remove item"
+                  className="absolute right-3 top-3 text-gray-300 transition-colors hover:text-red-500 active:scale-90"
+                >
+                  <Trash2 size={14} />
+                </button>
+
+                {/* Product Thumbnail — small circular tile */}
+                <div className="relative w-12 h-12 rounded-full bg-[#EAF7EE] flex-shrink-0 overflow-hidden">
                   <Image
                     src={product.image_url}
                     alt={product.name}
                     fill
-                    className="object-contain p-1"
-                    sizes="60px"
+                    className="object-contain p-1.5"
+                    sizes="48px"
                   />
                 </div>
 
                 {/* Details */}
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-xs font-bold text-gray-900 truncate leading-tight">
+                <div className="flex-1 min-w-0 pr-5">
+                  <h3 className="text-xs font-bold text-gray-900 leading-tight">
                     {product.name}
                   </h3>
-                  <p className="text-[10px] text-gray-400 mt-0.5">{product.weight || product.unit}</p>
-                  <div className="flex items-baseline gap-1.5 mt-1">
+                  <p className="mt-0.5 text-[10px] text-gray-400">{product.weight || product.unit}</p>
+                  <div className="mt-1 flex items-baseline gap-1.5">
                     <span className="text-sm font-black text-[#073729]">
                       {formatKSh(product.price * quantity)}
                     </span>
-                    {product.original_price && (
+                    {product.original_price > product.price && (
                       <span className="text-[10px] text-gray-400 line-through">
                         {formatKSh(product.original_price * quantity)}
                       </span>
@@ -195,34 +278,24 @@ export default function CartPage() {
                   </div>
                 </div>
 
-                {/* Stepper + Delete Button */}
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <div className="bg-[#B6E2BA] rounded-full py-1 px-1.5 flex items-center gap-2">
-                    <button
-                      onClick={() => updateQty(product.id, quantity - 1)}
-                      aria-label="Decrease quantity"
-                      className="w-5 h-5 rounded-full bg-white text-[#16A34A] flex items-center justify-center font-bold text-xs shadow-xs active:scale-90"
-                    >
-                      <Minus size={11} strokeWidth={3} />
-                    </button>
-                    <span className="font-bold text-xs text-[#073729] min-w-3 text-center">
-                      {quantity}
-                    </span>
-                    <button
-                      onClick={() => updateQty(product.id, quantity + 1)}
-                      aria-label="Increase quantity"
-                      className="w-5 h-5 rounded-full bg-[#16A34A] text-white flex items-center justify-center font-bold text-xs shadow-xs active:scale-90"
-                    >
-                      <Plus size={11} strokeWidth={3} />
-                    </button>
-                  </div>
-
+                {/* Stepper */}
+                <div className="flex flex-shrink-0 items-center gap-2">
                   <button
-                    onClick={() => removeItem(product.id)}
-                    aria-label="Remove item"
-                    className="w-7 h-7 rounded-full bg-red-50 hover:bg-red-100 text-red-500 flex items-center justify-center active:scale-90 transition-colors"
+                    onClick={() => updateQty(product.id, quantity - 1)}
+                    aria-label="Decrease quantity"
+                    className="w-6 h-6 rounded-full border border-gray-200 text-gray-500 flex items-center justify-center active:scale-90"
                   >
-                    <Trash2 size={13} />
+                    <Minus size={11} strokeWidth={3} />
+                  </button>
+                  <span className="font-bold text-xs text-[#073729] min-w-3 text-center">
+                    {quantity}
+                  </span>
+                  <button
+                    onClick={() => updateQty(product.id, quantity + 1)}
+                    aria-label="Increase quantity"
+                    className="w-6 h-6 rounded-full bg-[#073729] text-white flex items-center justify-center active:scale-90"
+                  >
+                    <Plus size={11} strokeWidth={3} />
                   </button>
                 </div>
               </div>
@@ -233,6 +306,7 @@ export default function CartPage() {
           <div className="space-y-3 lg:hidden">
             {orderTypeCard}
             {addressCard}
+            {promoCard}
           </div>
         </main>
 
@@ -241,13 +315,14 @@ export default function CartPage() {
           <div className="sticky top-24 space-y-3">
             {orderTypeCard}
             {addressCard}
+            {promoCard}
             <div className="bg-white rounded-2xl border border-gray-100 shadow-xs p-4 space-y-3">
               {summaryLines}
               <Link
                 href="/checkout"
                 className="w-full py-3.5 rounded-full bg-[#073729] hover:bg-[#0B3D2E] text-white text-xs font-black shadow-md flex items-center justify-center gap-2 active:scale-98 transition-all"
               >
-                <span>Proceed to Checkout</span>
+                <span>Proceed To Payment</span>
                 <ArrowRight size={14} />
               </Link>
             </div>
@@ -256,13 +331,13 @@ export default function CartPage() {
       </div>
 
       {/* Sticky Bottom Order Summary & Proceed CTA — mobile only */}
-      <div className="fixed bottom-0 left-0 w-full bg-white border-t border-gray-100 p-4 shadow-[0_-8px_25px_rgba(0,0,0,0.06)] z-40 space-y-2.5 lg:hidden">
+      <div className="above-bottom-nav fixed left-0 w-full bg-white border-t border-gray-100 p-4 shadow-[0_-8px_25px_rgba(0,0,0,0.06)] z-40 space-y-2.5 lg:hidden">
         {summaryLines}
         <Link
           href="/checkout"
           className="w-full py-3.5 rounded-full bg-[#073729] hover:bg-[#0B3D2E] text-white text-xs font-black shadow-md flex items-center justify-center gap-2 active:scale-98 transition-all"
         >
-          <span>Proceed to Checkout</span>
+          <span>Proceed To Payment</span>
           <ArrowRight size={14} />
         </Link>
       </div>

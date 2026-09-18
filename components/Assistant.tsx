@@ -16,7 +16,15 @@ export default function Assistant() {
     "Hi, I'm MamaFresh AI. Tell me what you're cooking or shopping for and I'll build a real shopping list from what's in stock."
   );
 
-  if (pathname === "/assistant" || pathname.startsWith("/messages") || pathname.startsWith("/seller/messages")) return null;
+  // Hide on pages with their own fixed bottom action bar to avoid overlapping it
+  if (
+    pathname === "/assistant" ||
+    pathname.startsWith("/messages") ||
+    pathname.startsWith("/seller/messages") ||
+    pathname === "/cart" ||
+    pathname === "/checkout" ||
+    pathname.startsWith("/products/")
+  ) return null;
 
   const submit = (event: React.FormEvent) => {
     event.preventDefault();
