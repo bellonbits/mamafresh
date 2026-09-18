@@ -24,8 +24,8 @@ export default function LocationPage() {
 
   return (
     <div className="min-h-screen bg-[#F8FAF9] flex flex-col animate-fade-in">
-      {/* Header */}
-      <header className="bg-[#073729] px-4 pt-4 pb-6 text-white">
+      {/* Header + GPS button — sticky, stays visible while the list below scrolls */}
+      <header className="sticky top-0 z-10 bg-[#073729] px-4 pt-4 pb-6 text-white shadow-md">
         <div className="flex items-center gap-3">
           <button
             onClick={() => router.back()}
@@ -45,44 +45,42 @@ export default function LocationPage() {
             We show fresh produce & mama mbogas closest to your neighborhood for fast 30-minute delivery.
           </p>
         </div>
+
+        {/* GPS Button — part of the sticky header so it never scrolls out of reach */}
+        <div className="mt-4 max-w-md mx-auto w-full md:max-w-2xl lg:max-w-4xl">
+          <button
+            onClick={() => void handleUseGps()}
+            disabled={locating}
+            className="w-full bg-white hover:bg-emerald-50 border border-white/20 rounded-2xl p-4 flex items-center justify-between text-left shadow-xs transition-all active:scale-98 group disabled:opacity-70"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-[#16A34A] text-white flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+                <Navigation size={18} className={locating ? "animate-spin" : ""} />
+              </div>
+              <div>
+                <p className="text-sm font-extrabold text-[#073729]">
+                  {locating ? "Locating your device..." : "Use my current location"}
+                </p>
+                <p className="text-xs text-[#15803d]">Real GPS via your browser</p>
+              </div>
+            </div>
+            <Sparkles size={16} className="text-[#16A34A]" />
+          </button>
+
+          {error && (
+            <div className="mt-3 flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-semibold text-red-700">
+              <AlertCircle size={14} className="mt-0.5 shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
+        </div>
       </header>
 
-      {/* Main Content */}
-      <main className="flex-1 px-4 py-5 max-w-md mx-auto w-full md:max-w-2xl lg:max-w-4xl">
-        {/* GPS Button */}
-        <button
-          onClick={() => void handleUseGps()}
-          disabled={locating}
-          className="w-full bg-[#EAF7EE] hover:bg-[#DCF2E2] border border-[#B6E2BA] rounded-2xl p-4 flex items-center justify-between text-left shadow-xs transition-all active:scale-98 mb-2 group disabled:opacity-70"
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-[#16A34A] text-white flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
-              <Navigation size={18} className={locating ? "animate-spin" : ""} />
-            </div>
-            <div>
-              <p className="text-sm font-extrabold text-[#073729]">
-                {locating ? "Locating your device..." : "Use my current location"}
-              </p>
-              <p className="text-xs text-[#15803d]">Real GPS via your browser</p>
-            </div>
-          </div>
-          <Sparkles size={16} className="text-[#16A34A]" />
-        </button>
-
-        {error && (
-          <div className="mb-4 flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-semibold text-red-700">
-            <AlertCircle size={14} className="mt-0.5 shrink-0" />
-            <span>{error}</span>
-          </div>
-        )}
-
-        {/* Neighborhood List */}
-        <div className="space-y-2 mt-2">
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider px-1">
-            Or choose a neighborhood
-          </p>
-
-        </div>
+      {/* Neighborhood List — scrolls normally with the page, under the sticky header */}
+      <main className="flex-1 px-4 pb-8 pt-4 max-w-md mx-auto w-full md:max-w-2xl lg:max-w-4xl">
+        <p className="mb-2 px-1 text-xs font-bold uppercase tracking-wider text-gray-400">
+          Or choose a neighborhood
+        </p>
         <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
           {areasLoading && <p className="col-span-full py-6 text-center text-xs font-bold text-gray-400">Loading service areas...</p>}
           {areaLabels.map((loc) => {
