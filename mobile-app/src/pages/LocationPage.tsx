@@ -25,51 +25,39 @@ export default function LocationPage() {
   return (
     <div className="min-h-screen bg-[#F8FAF9] flex flex-col animate-fade-in">
       {/* Header + GPS button — sticky, stays visible while the list below scrolls */}
-      <header className="sticky top-0 z-10 bg-[#073729] px-4 pt-4 pb-6 text-white shadow-md">
+      <header className="sticky top-0 z-10 bg-[#073729] px-4 pt-3 pb-3 text-white shadow-md">
         <div className="flex items-center gap-3">
           <button
             onClick={() => router.back()}
             aria-label="Back"
-            className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors active:scale-95"
+            className="w-8 h-8 shrink-0 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors active:scale-95"
           >
-            <ChevronLeft size={20} />
+            <ChevronLeft size={18} />
           </button>
-          <h1 className="text-base font-bold">Select Location</h1>
-        </div>
-
-        <div className="mt-4">
-          <h2 className="text-xl font-extrabold tracking-tight">
-            Where should we look for your groceries?
-          </h2>
-          <p className="text-xs text-emerald-200/80 mt-1">
-            We show fresh produce & mama mbogas closest to your neighborhood for fast 30-minute delivery.
-          </p>
+          <h1 className="text-sm font-bold">Select Location</h1>
         </div>
 
         {/* GPS Button — part of the sticky header so it never scrolls out of reach */}
-        <div className="mt-4 max-w-md mx-auto w-full md:max-w-2xl lg:max-w-4xl">
+        <div className="mt-2.5 max-w-md mx-auto w-full md:max-w-2xl lg:max-w-4xl">
           <button
             onClick={() => void handleUseGps()}
             disabled={locating}
-            className="w-full bg-white hover:bg-emerald-50 border border-white/20 rounded-2xl p-4 flex items-center justify-between text-left shadow-xs transition-all active:scale-98 group disabled:opacity-70"
+            className="w-full bg-white hover:bg-emerald-50 border border-white/20 rounded-full py-2 px-3 flex items-center justify-between text-left shadow-xs transition-all active:scale-98 group disabled:opacity-70"
           >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-[#16A34A] text-white flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
-                <Navigation size={18} className={locating ? "animate-spin" : ""} />
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-8 h-8 shrink-0 rounded-full bg-[#16A34A] text-white flex items-center justify-center group-hover:scale-105 transition-transform">
+                <Navigation size={15} className={locating ? "animate-spin" : ""} />
               </div>
-              <div>
-                <p className="text-sm font-extrabold text-[#073729]">
-                  {locating ? "Locating your device..." : "Use my current location"}
-                </p>
-                <p className="text-xs text-[#15803d]">Real GPS via your browser</p>
-              </div>
+              <p className="truncate text-xs font-extrabold text-[#073729]">
+                {locating ? "Locating your device..." : "Use my current location"}
+              </p>
             </div>
-            <Sparkles size={16} className="text-[#16A34A]" />
+            <Sparkles size={14} className="shrink-0 text-[#16A34A]" />
           </button>
 
           {error && (
-            <div className="mt-3 flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-semibold text-red-700">
-              <AlertCircle size={14} className="mt-0.5 shrink-0" />
+            <div className="mt-2 flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 p-2.5 text-[11px] font-semibold text-red-700">
+              <AlertCircle size={13} className="mt-0.5 shrink-0" />
               <span>{error}</span>
             </div>
           )}
