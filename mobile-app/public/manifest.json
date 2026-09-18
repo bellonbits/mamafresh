@@ -1,0 +1,31 @@
+{
+  "name": "MamaFresh",
+  "short_name": "MamaFresh",
+  "description": "Fresh produce from your neighborhood mama mboga",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0B3D2E",
+  "theme_color": "#0B3D2E",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/favico.png",
+      "sizes": "1254x1254",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Browse Sellers",
+      "url": "/sellers",
+      "description": "See nearby mama mbogas"
+    },
+    {
+      "name": "My Orders",
+      "url": "/orders",
+      "description": "Track your orders"
+    }
+  ],
+  "categories": ["food", "shopping"]
+}
