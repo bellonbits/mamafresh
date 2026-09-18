@@ -23,8 +23,8 @@ export default function BottomNav() {
   const totalItems = useCartStore((s) => s.getTotalItems());
   const cartActive = path.startsWith("/cart");
 
-  // Only hide on internal seller/admin dashboards and full-screen pages (AI chat, messaging)
-  if (path.startsWith("/seller") || path.startsWith("/admin") || path === "/assistant" || path.startsWith("/messages")) {
+  // Only hide on internal seller/admin dashboards and full-screen pages (AI chat, messaging, onboarding)
+  if (path.startsWith("/seller") || path.startsWith("/admin") || path === "/assistant" || path.startsWith("/messages") || path === "/welcome") {
     return null;
   }
 

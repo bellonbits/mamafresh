@@ -38,7 +38,7 @@ export default function AnnouncementBanner() {
     try { window.localStorage.setItem(DISMISSED_KEY, announcement.id); } catch { /* private mode, etc. */ }
   };
 
-  const hidden = pathname.startsWith("/seller") || pathname.startsWith("/admin") || pathname === "/assistant" || pathname.startsWith("/messages");
+  const hidden = pathname.startsWith("/seller") || pathname.startsWith("/admin") || pathname === "/assistant" || pathname.startsWith("/messages") || pathname === "/welcome";
   if (!announcement || dismissed || hidden) return null;
 
   return (

@@ -15,8 +15,8 @@ import {
 export default function Footer() {
   const pathname = usePathname();
 
-  // Hide footer on seller/admin dashboards and the full-screen AI page for a clean workspace view
-  if ((pathname.startsWith("/seller") && pathname !== "/seller/register") || pathname.startsWith("/admin") || pathname === "/assistant") {
+  // Hide footer on seller/admin dashboards, the full-screen AI page, and onboarding
+  if ((pathname.startsWith("/seller") && pathname !== "/seller/register") || pathname.startsWith("/admin") || pathname === "/assistant" || pathname === "/welcome") {
     return null;
   }
 

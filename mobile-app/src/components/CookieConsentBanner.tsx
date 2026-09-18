@@ -2,10 +2,13 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { Cookie } from "lucide-react";
 import { useCookieConsent } from "@/lib/hooks/useCookieConsent";
+import { usePathname } from "@/lib/next-compat/navigation";
 
 export default function CookieConsentBanner() {
+  const pathname = usePathname();
   const { consent, ready, accept, decline } = useCookieConsent();
-  const visible = ready && consent === "unset";
+  // Skip on onboarding — its own bottom buttons shouldn't compete with this.
+  const visible = ready && consent === "unset" && pathname !== "/welcome";
 
   return (
     <AnimatePresence>

@@ -1,4 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate, useParams } from "react-router-dom";
+import { usePathname } from "@/lib/next-compat/navigation";
+import { cn } from "@/lib/utils";
 import Navbar from "@/components/Navbar";
 import BottomNav from "@/components/BottomNav";
 import Footer from "@/components/Footer";
@@ -40,10 +42,23 @@ export default function App() {
   return (
     <BrowserRouter>
       <FavoritesProvider>
+        <AppShell />
+      </FavoritesProvider>
+    </BrowserRouter>
+  );
+}
+
+function AppShell() {
+  const pathname = usePathname();
+  // Onboarding is a standalone, full-screen experience with no app chrome
+  // around it, so it shouldn't reserve space for the (hidden) bottom nav either.
+  const isOnboarding = pathname === "/welcome";
+
+  return (
         <div className="app-shell relative min-h-screen flex flex-col">
           <AnnouncementBanner />
           <Navbar />
-          <main className="app-main flex-1 pb-nav">
+          <main className={cn("app-main flex-1", !isOnboarding && "pb-nav")}>
             <Routes>
               <Route path="/" element={<Navigate to="/home" replace />} />
               <Route path="/welcome" element={<WelcomePage />} />
@@ -85,8 +100,6 @@ export default function App() {
           <Assistant />
           <CookieConsentBanner />
         </div>
-      </FavoritesProvider>
-    </BrowserRouter>
   );
 }
 
