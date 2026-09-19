@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, Trash2, Power, CheckCircle2, X, Megaphone } from "lucide-react";
+import { Plus, Trash2, Power, CheckCircle2, X, Megaphone, Truck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
-import type { AnnouncementRow } from "@/lib/supabase/types";
+import type { AnnouncementRow, MarketplaceSettingsRow } from "@/lib/supabase/types";
 
 export default function AdminNotificationsPage() {
   const [announcements, setAnnouncements] = useState<AnnouncementRow[]>([]);
@@ -15,6 +15,10 @@ export default function AdminNotificationsPage() {
   const [body, setBody] = useState("");
   const [saving, setSaving] = useState(false);
 
+  const [deliveryBannerText, setDeliveryBannerText] = useState("");
+  const [deliveryBannerEnabled, setDeliveryBannerEnabled] = useState(true);
+  const [savingBanner, setSavingBanner] = useState(false);
+
   const load = async () => {
     setLoading(true);
     const { data } = await getSupabaseBrowserClient().from("announcements").select("*").order("created_at", { ascending: false });
@@ -22,7 +26,35 @@ export default function AdminNotificationsPage() {
     setLoading(false);
   };
 
-  useEffect(() => { queueMicrotask(() => { void load(); }); }, []);
+  const loadDeliveryBanner = async () => {
+    const { data } = await getSupabaseBrowserClient().from("marketplace_settings").select("delivery_banner_text, delivery_banner_enabled").maybeSingle();
+    const row = data as Pick<MarketplaceSettingsRow, "delivery_banner_text" | "delivery_banner_enabled"> | null;
+    if (row) {
+      setDeliveryBannerText(row.delivery_banner_text);
+      setDeliveryBannerEnabled(row.delivery_banner_enabled);
+    }
+  };
+
+  useEffect(() => { queueMicrotask(() => { void load(); void loadDeliveryBanner(); }); }, []);
+
+  const saveDeliveryBanner = async (overrides?: Partial<{ text: string; enabled: boolean }>) => {
+    const text = overrides?.text ?? deliveryBannerText;
+    const enabled = overrides?.enabled ?? deliveryBannerEnabled;
+    setSavingBanner(true);
+    const { error } = await getSupabaseBrowserClient()
+      .from("marketplace_settings")
+      .update({ delivery_banner_text: text, delivery_banner_enabled: enabled, updated_at: new Date().toISOString() })
+      .eq("id", true);
+    setSavingBanner(false);
+    if (error) { notify(error.message); return; }
+    notify("Delivery banner updated.");
+  };
+
+  const toggleDeliveryBanner = async () => {
+    const next = !deliveryBannerEnabled;
+    setDeliveryBannerEnabled(next);
+    await saveDeliveryBanner({ enabled: next });
+  };
 
   const notify = (message: string) => {
     setToast(message);
@@ -76,6 +108,38 @@ export default function AdminNotificationsPage() {
           <CheckCircle2 size={16} /> {toast}
         </div>
       )}
+
+      <div className="rounded-2xl border border-gray-100 bg-white p-4">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <Truck size={16} className="text-[#16A34A]" />
+            <div>
+              <p className="text-sm font-bold text-gray-900">Delivery banner</p>
+              <p className="text-xs text-gray-500">The free-delivery strip shown at the top of the Home, Offers and Product pages</p>
+            </div>
+          </div>
+          <button
+            onClick={() => void toggleDeliveryBanner()}
+            aria-label={deliveryBannerEnabled ? "Hide banner" : "Show banner"}
+            className={cn("rounded-lg p-2", deliveryBannerEnabled ? "bg-[#DCFCE7] text-[#15803d]" : "bg-gray-100 text-gray-500")}
+          >
+            <Power size={14} />
+          </button>
+        </div>
+        <textarea
+          rows={2}
+          value={deliveryBannerText}
+          onChange={(e) => setDeliveryBannerText(e.target.value)}
+          className="mt-3 w-full resize-none rounded-xl border border-gray-200 p-2.5 text-sm"
+        />
+        <button
+          onClick={() => void saveDeliveryBanner()}
+          disabled={savingBanner}
+          className="mt-2 rounded-full bg-[#073729] px-4 py-2 text-xs font-bold text-white disabled:opacity-60"
+        >
+          {savingBanner ? "Saving..." : "Save banner text"}
+        </button>
+      </div>
 
       <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white">
         {loading ? (

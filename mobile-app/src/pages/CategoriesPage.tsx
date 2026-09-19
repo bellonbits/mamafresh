@@ -6,7 +6,7 @@ import { ChevronRight } from "lucide-react";
 
 export default function CategoriesPage() {
   return (
-    <div className="animate-fade-in min-h-screen bg-[#F4F6F5] pb-28">
+    <div className="animate-fade-in bg-[#F4F6F5]">
       {/* Header with logo */}
       <div className="bg-white border-b border-gray-100 px-5 py-4 flex items-center gap-3 sticky top-0 z-10 shadow-sm">
         <Image src="/logo.png" alt="MamaFresh" width={32} height={32} className="rounded-xl" />

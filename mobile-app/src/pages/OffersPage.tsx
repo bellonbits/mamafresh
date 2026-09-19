@@ -8,6 +8,7 @@ import { CATEGORIES } from "@/lib/mock-data";
 import CategoryIcon from "@/components/CategoryIcon";
 import { cn } from "@/lib/utils";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { useDeliveryBanner } from "@/lib/hooks/useDeliveryBanner";
 import type { ProductRow, PromotionRow } from "@/lib/supabase/types";
 
 const MENU_ITEMS = [
@@ -31,6 +32,7 @@ export default function OffersPage() {
   const [products, setProducts] = useState<ProductRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [promotions, setPromotions] = useState<PromotionRow[]>([]);
+  const deliveryBanner = useDeliveryBanner();
 
   useEffect(() => {
     let active = true;
@@ -70,9 +72,9 @@ export default function OffersPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F4F7F4] pb-28 animate-fade-in">
-      <div className="bg-[#073729] px-5 py-2 text-center text-[10px] font-semibold tracking-wide text-emerald-100">Free delivery on orders over KSh 1,500. Freshness delivered to your door.</div>
-      <header className="border-b border-emerald-100 bg-white">
+    <div className="bg-[#F4F7F4] animate-fade-in">
+      {deliveryBanner.enabled && <div className="bg-[#073729] px-5 py-2 text-center text-[10px] font-semibold tracking-wide text-emerald-100" style={{ paddingTop: "calc(0.5rem + env(safe-area-inset-top, 0px))" }}>{deliveryBanner.text}</div>}
+      <header className="border-b border-emerald-100 bg-white" style={deliveryBanner.enabled ? undefined : { paddingTop: "env(safe-area-inset-top, 0px)" }}>
         <div className="mx-auto flex max-w-7xl items-center gap-5 px-5 py-4 lg:px-8">
           <Link href="/home" className="flex h-12 w-[132px] shrink-0 items-center sm:w-[150px]"><Image src="/logo.png" alt="MamaFresh" width={300} height={200} priority className="h-full w-full object-contain object-left" /></Link>
           <nav className="hidden items-center gap-6 text-sm font-semibold text-gray-600 lg:flex"><Link href="/home" className="hover:text-[#16A34A]">Home</Link><Link href="/shops" className="hover:text-[#16A34A]">Shop</Link><Link href="/offers" className="text-[#16A34A]">Offers</Link><Link href="/assistant" className="flex items-center gap-1 hover:text-[#16A34A]"><Sparkles size={14} /> MamaFresh AI</Link><Link href="/about" className="hover:text-[#16A34A]">About</Link><Link href="/contact" className="hover:text-[#16A34A]">Contact</Link></nav>
@@ -104,7 +106,7 @@ export default function OffersPage() {
       </header>
 
       <main className="mx-auto max-w-7xl space-y-8 px-4 py-5 sm:px-6 lg:px-8 lg:py-8">
-        <section className="relative min-h-56 overflow-hidden rounded-2xl bg-[#5BAACB] px-6 py-8 sm:min-h-64 sm:px-10 lg:min-h-72 lg:px-14 lg:py-12"><div className="absolute inset-0 bg-gradient-to-r from-[#5BAACB]/95 via-[#5BAACB]/65 to-transparent" /><div className="relative z-10 max-w-lg"><span className="inline-flex items-center gap-1 rounded-full bg-[#E84919] px-3 py-1 text-[10px] font-black uppercase tracking-wide text-white"><Sparkles size={12} /> Mega grocery sale</span><h1 className="mt-3 text-3xl font-black leading-tight text-[#073729] sm:text-4xl lg:text-5xl">30% flat discount on fresh groceries.</h1><p className="mt-3 max-w-md text-sm text-[#073729]/70">Special prices from trusted neighborhood sellers, available while stocks last.</p><Link href="/shops" className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#073729] px-5 py-3 text-xs font-black text-white">Shop deals <ArrowRight size={14} /></Link></div><Image src="/offer.png" alt="Fresh grocery offer" fill className="object-cover object-right" sizes="900px" /></section>
+        <section className="relative min-h-56 overflow-hidden rounded-2xl bg-[#5BAACB] px-6 py-8 sm:min-h-64 sm:px-10 lg:min-h-72 lg:px-14 lg:py-12"><Image src="/offer.png" alt="Fresh grocery offer" fill className="object-cover object-right" sizes="900px" /><div className="absolute inset-0 bg-gradient-to-r from-[#5BAACB]/95 via-[#5BAACB]/65 to-transparent" /><div className="relative z-10 max-w-lg rounded-2xl bg-white/20 p-4 backdrop-blur-md sm:p-6"><span className="inline-flex items-center gap-1 rounded-full bg-[#E84919] px-3 py-1 text-[10px] font-black uppercase tracking-wide text-white"><Sparkles size={12} /> Mega grocery sale</span><h1 className="mt-3 text-3xl font-black leading-tight text-[#073729] sm:text-4xl lg:text-5xl">30% flat discount on fresh groceries.</h1><p className="mt-3 max-w-md text-sm text-[#073729]/80">Special prices from trusted neighborhood sellers, available while stocks last.</p><Link href="/shops" className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#073729] px-5 py-3 text-xs font-black text-white">Shop deals <ArrowRight size={14} /></Link></div></section>
 
         <section>
           <div className="mb-4 flex items-center justify-between">

@@ -139,7 +139,7 @@ export default function SellerStorefrontPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F4F6F5] pb-24 animate-fade-in">
+    <div className="bg-[#F4F6F5] animate-fade-in">
       {/* Centered container with uniform width and alignment */}
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 space-y-4 sm:space-y-5">
         

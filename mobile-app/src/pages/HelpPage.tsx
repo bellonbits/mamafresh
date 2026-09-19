@@ -49,7 +49,7 @@ export default function HelpPage() {
   }
 
   return (
-    <div className="page-shell min-h-screen bg-[#F7F8F6] pb-28 animate-fade-in">
+    <div className="page-shell bg-[#F7F8F6] animate-fade-in">
       {/* Header */}
       <header className="sticky top-0 z-10 bg-white border-b border-gray-100 px-4 py-3 flex items-center gap-3">
         <Link

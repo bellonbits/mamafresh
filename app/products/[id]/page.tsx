@@ -22,6 +22,7 @@ import {
   UserRound,
   Flag,
   Truck,
+  LayoutDashboard,
 } from "lucide-react";
 import { getDefaultProductImage } from "@/lib/mock-data";
 import { useCartStore } from "@/lib/store/cart";
@@ -31,6 +32,9 @@ import FormattedPrice from "@/components/FormattedPrice";
 import ProductCard from "@/components/ProductCard";
 import { cn, formatKSh } from "@/lib/utils";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { useDeliveryBanner } from "@/lib/hooks/useDeliveryBanner";
+import { useIsAdmin } from "@/lib/hooks/useIsAdmin";
+import { useCurrentSeller } from "@/lib/hooks/useCurrentSeller";
 import type { ProductRow, SellerRow, ReviewRow } from "@/lib/supabase/types";
 
 interface Props {
@@ -54,6 +58,11 @@ export default function ProductDetailsPage({ params }: Props) {
   const [reviews, setReviews] = useState<ReviewRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFoundFlag, setNotFoundFlag] = useState(false);
+  const deliveryBanner = useDeliveryBanner();
+  const { isAdmin } = useIsAdmin();
+  const { seller: ownSeller } = useCurrentSeller();
+  const dashboardHref = isAdmin ? "/admin" : ownSeller ? "/seller" : null;
+  const dashboardLabel = isAdmin ? "Admin dashboard" : "Seller dashboard";
   const [startingChat, setStartingChat] = useState(false);
   const [reportedReviewIds, setReportedReviewIds] = useState<Set<string>>(new Set());
   const [galleryUrls, setGalleryUrls] = useState<string[]>([]);
@@ -236,9 +245,11 @@ export default function ProductDetailsPage({ params }: Props) {
       {/* ─────────────────────────────────────────────────────────── */}
       {/*  Top Header                                                 */}
       {/* ─────────────────────────────────────────────────────────── */}
-      <div className="bg-[#073729] px-5 py-2 text-center text-[10px] font-semibold tracking-wide text-emerald-100">
-        Free delivery on orders over KSh 1,500. Freshness delivered to your door.
-      </div>
+      {deliveryBanner.enabled && (
+        <div className="bg-[#073729] px-5 py-2 text-center text-[10px] font-semibold tracking-wide text-emerald-100">
+          {deliveryBanner.text}
+        </div>
+      )}
       <header className="sticky top-0 z-30 border-b border-emerald-100 bg-white">
         <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3 sm:px-6 lg:px-8">
           <button onClick={() => router.back()} aria-label="Go back" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-gray-200 text-[#073729] hover:border-[#84CC16]">
@@ -259,6 +270,11 @@ export default function ProductDetailsPage({ params }: Props) {
             <Link href="/search" aria-label="Search" className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 text-gray-600"><Search size={18} /></Link>
             <Link href="/favorites" aria-label="Favorites" className="hidden h-10 w-10 items-center justify-center rounded-full border border-gray-200 text-gray-600 sm:flex"><Heart size={18} /></Link>
             <Link href="/cart" aria-label="View cart" className="relative flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 text-[#073729]"><ShoppingCart size={18} />{totalItems > 0 && <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#E84919] px-1 text-[9px] font-bold text-white">{Math.ceil(totalItems)}</span>}</Link>
+            {dashboardHref && (
+              <Link href={dashboardHref} aria-label={dashboardLabel} title={dashboardLabel} className="hidden h-10 w-10 items-center justify-center rounded-full border border-[#84CC16] bg-[#F0FDF4] text-[#16A34A] hover:bg-[#DCFCE7] sm:flex">
+                <LayoutDashboard size={18} />
+              </Link>
+            )}
             <Link href="/account" aria-label="Account" className="hidden h-10 w-10 items-center justify-center rounded-full bg-[#073729] text-white sm:flex"><UserRound size={17} /></Link>
           </div>
         </div>

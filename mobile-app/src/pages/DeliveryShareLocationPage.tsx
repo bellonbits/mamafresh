@@ -44,7 +44,7 @@ export default function DeliveryShareLocationPage() {
   const lastUpdated = order.seller_location_updated_at ? new Date(order.seller_location_updated_at) : null;
 
   return (
-    <div className="min-h-screen bg-[#FFFDF7] pb-28 animate-fade-in">
+    <div className="bg-[#FFFDF7] animate-fade-in">
       <header className="px-4 py-3 flex items-center gap-3 sticky top-0 z-30 bg-[#FFFDF7]/95 backdrop-blur-xs border-b border-gray-100">
         <button onClick={() => router.back()} aria-label="Back" className="w-9 h-9 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-700">
           <ChevronLeft size={20} />

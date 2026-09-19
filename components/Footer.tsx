@@ -187,7 +187,7 @@ export default function Footer() {
         <div className="pt-6 border-t border-emerald-800/40 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-emerald-200/60">
           <p>© {new Date().getFullYear()} MamaFresh Technologies Ltd. All rights reserved.</p>
           <div className="flex items-center gap-4">
-            <Link href="/about" className="hover:text-white transition-colors">
+            <Link href="/privacy" className="hover:text-white transition-colors">
               Terms & Privacy
             </Link>
             <span aria-hidden="true">|</span>

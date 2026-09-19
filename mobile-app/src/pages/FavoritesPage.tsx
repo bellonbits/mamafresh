@@ -51,7 +51,7 @@ export default function FavoritesPage() {
   const visibleProducts = favoriteProducts.slice(0, visibleCount);
 
   return (
-    <div className="min-h-screen bg-[#FFFDF7] pb-32 animate-fade-in">
+    <div className="bg-[#FFFDF7] animate-fade-in">
       {/* Top Header */}
       <header className="px-4 sm:px-8 lg:px-12 py-4 flex items-center justify-between sticky top-0 z-30 bg-[#FFFDF7]/95 backdrop-blur-xs border-b border-gray-100">
         <button

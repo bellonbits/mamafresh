@@ -12,7 +12,7 @@ const stats = [
 
 export default function AboutPage() {
   return (
-    <div className="min-h-screen bg-[#F7F8F6] pb-24 animate-fade-in">
+    <div className="bg-[#F7F8F6] animate-fade-in">
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-14">
         <section className="grid items-end gap-8 lg:grid-cols-[1fr_1.2fr] lg:gap-16">
           <div><p className="text-xs font-black uppercase tracking-[0.2em] text-[#16A34A]">About MamaFresh</p><h1 className="mt-4 max-w-xl text-4xl font-black leading-[1.02] tracking-tight text-[#073729] sm:text-5xl lg:text-6xl">Fresh food, closer to home.</h1><p className="mt-5 max-w-lg text-sm leading-relaxed text-gray-600 sm:text-base">We connect neighborhood mama mbogas with households looking for fresh, affordable produce delivered with care across East Africa.</p><Link href="/shops" className="mt-7 inline-flex items-center gap-2 rounded-full bg-[#073729] px-5 py-3 text-xs font-black text-white">Explore the marketplace <ArrowRight size={14} /></Link></div>

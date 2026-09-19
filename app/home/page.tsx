@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -14,6 +13,7 @@ import {
   Heart,
   Home as HomeIcon,
   Info,
+  LayoutDashboard,
   MapPin,
   Menu,
   MessageCircle,
@@ -30,10 +30,12 @@ import {
 } from "lucide-react";
 import { CATEGORIES } from "@/lib/mock-data";
 import { useServiceAreas } from "@/lib/hooks/useServiceAreas";
+import { useDeliveryBanner } from "@/lib/hooks/useDeliveryBanner";
+import { useIsAdmin } from "@/lib/hooks/useIsAdmin";
+import { useCurrentSeller } from "@/lib/hooks/useCurrentSeller";
 import CategoryIcon from "@/components/CategoryIcon";
 import ProductCard from "@/components/ProductCard";
 import RotatingWord from "@/components/RotatingWord";
-import { ONBOARDING_SEEN_KEY } from "@/lib/onboarding";
 import { cn } from "@/lib/utils";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useCartStore } from "@/lib/store/cart";
@@ -72,10 +74,14 @@ const MENU_ITEMS = [
 ];
 
 export default function CustomerHomePage() {
-  const router = useRouter();
   const [selectedCategory, setSelectedCategory] = useState("all");
   const { location, setLocation, locating, error: locationError, detectCurrentLocation } = useDeliveryLocation();
   const { labels: areaLabels } = useServiceAreas();
+  const deliveryBanner = useDeliveryBanner();
+  const { isAdmin } = useIsAdmin();
+  const { seller } = useCurrentSeller();
+  const dashboardHref = isAdmin ? "/admin" : seller ? "/seller" : null;
+  const dashboardLabel = isAdmin ? "Admin dashboard" : "Seller dashboard";
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [products, setProducts] = useState<ProductRow[]>([]);
@@ -86,16 +92,6 @@ export default function CustomerHomePage() {
   const { getTotalItems } = useCartStore();
   const { threads: messageThreads } = useChatThreads({ role: "customer", filterId: userId });
   const unreadMessages = messageThreads.reduce((sum, t) => sum + t.unread, 0);
-
-  // First-visit onboarding — mobile only, shown once, then never again.
-  useEffect(() => {
-    try {
-      const isMobile = window.matchMedia("(max-width: 767px)").matches;
-      const seen = window.localStorage.getItem(ONBOARDING_SEEN_KEY) === "true";
-      if (isMobile && !seen) router.replace("/welcome");
-    } catch { /* private mode, etc. — just skip onboarding rather than block the app */ }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   useEffect(() => {
     let active = true;
@@ -148,10 +144,12 @@ export default function CustomerHomePage() {
     : products.filter((product) => product.category_slug === selectedCategory || product.category.toLowerCase() === selectedCategory.toLowerCase());
 
   return (
-    <div className="home-page min-h-screen bg-[#F4F7F4] pb-28 md:pb-0 animate-fade-in">
-      <div className="bg-[#073729] px-5 py-2 text-center text-[10px] font-semibold tracking-wide text-emerald-100">
-        Free delivery on orders over KSh 1,500. Freshness delivered to your door.
-      </div>
+    <div className="home-page bg-[#F4F7F4] pb-28 md:pb-0 animate-fade-in">
+      {deliveryBanner.enabled && (
+        <div className="bg-[#073729] px-5 py-2 text-center text-[10px] font-semibold tracking-wide text-emerald-100">
+          {deliveryBanner.text}
+        </div>
+      )}
 
       <header className="border-b border-emerald-100 bg-white">
         <div className="mx-auto flex max-w-7xl items-center gap-5 px-5 py-4 lg:px-8">
@@ -183,6 +181,11 @@ export default function CustomerHomePage() {
               {unreadMessages > 0 && <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#E84919] px-1 text-[9px] font-bold text-white">{unreadMessages}</span>}
             </Link>
             <Link href="/cart" aria-label="Shopping cart" className="relative flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 text-[#073729] hover:border-[#84CC16]"><ShoppingCart size={18} />{getTotalItems() > 0 && <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#E84919] px-1 text-[9px] font-bold text-white">{getTotalItems()}</span>}</Link>
+            {dashboardHref && (
+              <Link href={dashboardHref} aria-label={dashboardLabel} title={dashboardLabel} className="hidden h-10 w-10 items-center justify-center rounded-full border border-[#84CC16] bg-[#F0FDF4] text-[#16A34A] hover:bg-[#DCFCE7] sm:flex">
+                <LayoutDashboard size={18} />
+              </Link>
+            )}
             {!authChecked ? (
               <span className="hidden h-10 w-10 items-center justify-center rounded-full bg-[#073729] text-white sm:flex"><UserRound size={17} /></span>
             ) : currentUser ? (
@@ -213,6 +216,12 @@ export default function CustomerHomePage() {
             </Link>
           )}
           <div className="flex flex-col divide-y divide-gray-100">
+            {dashboardHref && (
+              <Link href={dashboardHref} onClick={() => setShowMenu(false)} className="flex items-center justify-between py-3 text-sm font-semibold text-[#16A34A]">
+                <span className="flex items-center gap-3"><LayoutDashboard size={17} className="text-[#16A34A]" />{dashboardLabel}</span>
+                <ChevronRight size={16} className="text-gray-300" />
+              </Link>
+            )}
             {MENU_ITEMS.map(({ href, label, icon: Icon, withUnread, accent }) => (
               <Link
                 key={href}
@@ -326,14 +335,14 @@ export default function CustomerHomePage() {
         <section className="mt-10 rounded-3xl bg-[#E6F4D2] px-6 py-8 sm:px-10 lg:flex lg:items-center lg:justify-between"><div><p className="text-xs font-black uppercase tracking-wider text-[#16A34A]">MamaFresh promise</p><h2 className="mt-2 max-w-xl text-2xl font-black text-[#073729]">Fresh produce, fair prices, and neighborhood sellers you can trust.</h2></div><Link href="/about" className="mt-5 inline-flex items-center gap-2 rounded-full bg-[#073729] px-5 py-3 text-xs font-black text-white lg:mt-0">Our mission <ArrowRight size={14} /></Link></section>
       </main>
 
-      {showLocationModal && <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4" onClick={() => setShowLocationModal(false)}><div className="w-full max-w-md rounded-t-3xl bg-white p-6 sm:rounded-3xl" onClick={(event) => event.stopPropagation()}><div className="mb-4 flex items-center justify-between"><div><h3 className="font-black text-gray-900">Delivery location</h3><p className="text-xs text-gray-400">Choose your neighborhood</p></div><button onClick={() => setShowLocationModal(false)} aria-label="Close location dialog" className="rounded-full bg-gray-100 p-2"><X size={16} /></button></div>
-        <button onClick={() => void handleUseGpsInModal()} disabled={locating} className="mb-3 flex w-full items-center gap-3 rounded-xl border border-[#B6E2BA] bg-[#EAF7EE] p-3 text-left transition-colors hover:bg-[#DCF2E2] disabled:opacity-70">
+      {showLocationModal && <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4" onClick={() => setShowLocationModal(false)}><div className="flex max-h-[85dvh] w-full max-w-md flex-col rounded-t-3xl bg-white p-6 sm:max-h-[80dvh] sm:rounded-3xl" onClick={(event) => event.stopPropagation()}><div className="mb-4 flex shrink-0 items-center justify-between"><div><h3 className="font-black text-gray-900">Delivery location</h3><p className="text-xs text-gray-400">Choose your neighborhood</p></div><button onClick={() => setShowLocationModal(false)} aria-label="Close location dialog" className="rounded-full bg-gray-100 p-2"><X size={16} /></button></div>
+        <button onClick={() => void handleUseGpsInModal()} disabled={locating} className="mb-3 flex w-full shrink-0 items-center gap-3 rounded-xl border border-[#B6E2BA] bg-[#EAF7EE] p-3 text-left transition-colors hover:bg-[#DCF2E2] disabled:opacity-70">
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#16A34A] text-white"><Navigation size={16} className={locating ? "animate-spin" : ""} /></span>
           <span><span className="block text-sm font-bold text-[#073729]">{locating ? "Locating..." : "Use my current location"}</span><span className="block text-[11px] text-[#15803d]">Real GPS via your browser</span></span>
         </button>
-        {locationError && <p className="mb-3 flex items-start gap-1.5 rounded-lg bg-red-50 p-2.5 text-[11px] font-semibold text-red-700"><AlertCircle size={12} className="mt-0.5 shrink-0" />{locationError}</p>}
-        <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-gray-400">Or choose a neighborhood</p>
-        <div className="space-y-2">{areaLabels.map((item) => <button key={item} onClick={() => chooseLocation(item)} className={cn("flex w-full items-center justify-between rounded-xl p-3 text-left text-sm font-semibold", location === item ? "bg-[#E6F4D2] text-[#073729]" : "bg-gray-50 text-gray-700")}>{item}{location === item && <Check size={16} className="text-[#16A34A]" />}</button>)}</div></div></div>}
+        {locationError && <p className="mb-3 flex shrink-0 items-start gap-1.5 rounded-lg bg-red-50 p-2.5 text-[11px] font-semibold text-red-700"><AlertCircle size={12} className="mt-0.5 shrink-0" />{locationError}</p>}
+        <div className="min-h-0 flex-1 overflow-y-auto"><p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-gray-400">Or choose a neighborhood</p>
+        <div className="space-y-2 pb-1">{areaLabels.map((item) => <button key={item} onClick={() => chooseLocation(item)} className={cn("flex w-full items-center justify-between rounded-xl p-3 text-left text-sm font-semibold", location === item ? "bg-[#E6F4D2] text-[#073729]" : "bg-gray-50 text-gray-700")}>{item}{location === item && <Check size={16} className="text-[#16A34A]" />}</button>)}</div></div></div></div>}
     </div>
   );
 }

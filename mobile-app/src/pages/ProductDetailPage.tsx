@@ -30,6 +30,7 @@ import FormattedPrice from "@/components/FormattedPrice";
 import ProductCard from "@/components/ProductCard";
 import { cn, formatKSh } from "@/lib/utils";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { useDeliveryBanner } from "@/lib/hooks/useDeliveryBanner";
 import type { ProductRow, SellerRow, ReviewRow } from "@/lib/supabase/types";
 
 const WEIGHT_OPTIONS = [
@@ -49,6 +50,7 @@ export default function ProductDetailsPage() {
   const [reviews, setReviews] = useState<ReviewRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFoundFlag, setNotFoundFlag] = useState(false);
+  const deliveryBanner = useDeliveryBanner();
   const [startingChat, setStartingChat] = useState(false);
   const [reportedReviewIds, setReportedReviewIds] = useState<Set<string>>(new Set());
   const [galleryUrls, setGalleryUrls] = useState<string[]>([]);
@@ -231,10 +233,16 @@ export default function ProductDetailsPage() {
       {/* ─────────────────────────────────────────────────────────── */}
       {/*  Top Header                                                 */}
       {/* ─────────────────────────────────────────────────────────── */}
-      <div className="bg-[#073729] px-5 py-2 text-center text-[10px] font-semibold tracking-wide text-emerald-100">
-        Free delivery on orders over KSh 1,500. Freshness delivered to your door.
-      </div>
-      <header className="sticky top-0 z-30 border-b border-emerald-100 bg-white">
+      {deliveryBanner.enabled && (
+        <div
+          className="bg-[#073729] px-5 py-2 text-center text-[10px] font-semibold tracking-wide text-emerald-100"
+          style={{ paddingTop: "calc(0.5rem + env(safe-area-inset-top, 0px))" }}
+        >
+          {deliveryBanner.text}
+        </div>
+      )}
+      {/* top: env(...) rather than top-0 — once this sticks, top-0 would tuck it back under the status bar on edge-to-edge Android */}
+      <header className="sticky z-30 border-b border-emerald-100 bg-white" style={{ top: "env(safe-area-inset-top, 0px)" }}>
         <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3 sm:px-6 lg:px-8">
           <button onClick={() => router.back()} aria-label="Go back" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-gray-200 text-[#073729] hover:border-[#84CC16]">
             <ChevronLeft size={20} strokeWidth={2.5} />

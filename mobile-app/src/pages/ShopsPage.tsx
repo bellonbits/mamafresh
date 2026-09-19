@@ -78,7 +78,7 @@ export default function ShopsDirectoryPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F1F3F3] pb-28 animate-fade-in">
+    <div className="bg-[#F1F3F3] animate-fade-in">
       <header className="bg-[#073729] text-white">
         <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 py-5 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between gap-4">

@@ -39,7 +39,7 @@ export default function CategoryDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F4F6F5] pb-28 animate-fade-in">
+    <div className="bg-[#F4F6F5] animate-fade-in">
       {/* Category Header */}
       <div className="bg-[#073729] text-white px-4 sm:px-6 py-6 shadow-sm">
         <div className="max-w-6xl mx-auto">

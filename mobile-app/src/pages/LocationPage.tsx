@@ -23,7 +23,7 @@ export default function LocationPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAF9] flex flex-col animate-fade-in">
+    <div className="bg-[#F8FAF9] flex flex-col animate-fade-in">
       {/* Header + GPS button — sticky, stays visible while the list below scrolls */}
       <header className="sticky top-0 z-10 bg-[#073729] px-4 pt-3 pb-3 text-white shadow-md">
         <div className="flex items-center gap-3">

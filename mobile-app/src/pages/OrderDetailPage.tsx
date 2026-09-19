@@ -136,7 +136,7 @@ export default function OrderTrackingPage() {
           : 0;
 
   return (
-    <div className="min-h-screen bg-[#f5f5f4] pb-24 animate-fade-in">
+    <div className="bg-[#f5f5f4] animate-fade-in">
       <main className="mx-auto max-w-7xl px-5 py-5 sm:px-8 lg:px-10">
         <nav className="mb-6 flex items-center gap-2 text-[10px] text-[#777]" aria-label="Breadcrumb">
           <Link href="/home" className="hover:text-[#073729]">Home</Link><ChevronRight size={11} />

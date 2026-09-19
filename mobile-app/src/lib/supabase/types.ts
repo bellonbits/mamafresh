@@ -162,6 +162,8 @@ export type ServiceAreaRow = {
 export type MarketplaceSettingsRow = {
   id: true;
   commission_rate: number;
+  delivery_banner_text: string;
+  delivery_banner_enabled: boolean;
   updated_at: string;
 };
 

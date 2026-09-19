@@ -50,7 +50,7 @@ export default function RootLayout({
           <div className="app-shell relative min-h-screen flex flex-col">
             <AnnouncementBanner />
             <Navbar />
-            <main className="app-main flex-1 pb-nav">
+            <main className="app-main pb-nav">
               {children}
             </main>
             <Footer />

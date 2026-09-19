@@ -520,6 +520,9 @@ create table if not exists public.marketplace_settings (
 );
 insert into public.marketplace_settings (id) values (true) on conflict (id) do nothing;
 
+alter table public.marketplace_settings add column if not exists delivery_banner_text text not null default 'Free delivery on orders over KSh 1,500. Freshness delivered to your door.';
+alter table public.marketplace_settings add column if not exists delivery_banner_enabled boolean not null default true;
+
 alter table public.marketplace_settings enable row level security;
 do $$ begin create policy "Anyone reads marketplace settings" on public.marketplace_settings for select using (true); exception when duplicate_object then null; end $$;
 do $$ begin create policy "Admins update marketplace settings" on public.marketplace_settings for update using (public.is_admin()) with check (public.is_admin()); exception when duplicate_object then null; end $$;

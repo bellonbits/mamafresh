@@ -12,14 +12,17 @@ import {
   Sparkles,
 } from "lucide-react";
 
-export default function Footer() {
-  const pathname = usePathname();
-
-  // Hide footer on seller/admin dashboards, the full-screen AI page, onboarding,
-  // and any page with its own fixed bottom action bar — a fixed-position bar
-  // stays pinned to the viewport while the footer scrolls freely underneath it,
-  // so the two can't coexist without the bar appearing to float over the footer.
-  if (
+// Hide footer on seller/admin dashboards, the full-screen AI page, onboarding,
+// and any page with its own fixed bottom action bar — a fixed-position bar
+// stays pinned to the viewport while the footer scrolls freely underneath it,
+// so the two can't coexist without the bar appearing to float over the footer.
+//
+// Exported so App.tsx can apply the fixed BottomNav's bottom-clearance padding
+// to <main> only on these same routes — everywhere else, Footer's own bottom
+// padding already clears the BottomNav, so duplicating that padding on <main>
+// just adds blank space above the footer.
+export function isFooterHidden(pathname: string) {
+  return (
     (pathname.startsWith("/seller") && pathname !== "/seller/register") ||
     pathname.startsWith("/admin") ||
     pathname === "/assistant" ||
@@ -27,7 +30,13 @@ export default function Footer() {
     pathname === "/cart" ||
     pathname === "/checkout" ||
     pathname.startsWith("/products/")
-  ) {
+  );
+}
+
+export default function Footer() {
+  const pathname = usePathname();
+
+  if (isFooterHidden(pathname)) {
     return null;
   }
 
@@ -197,7 +206,7 @@ export default function Footer() {
         <div className="pt-6 border-t border-emerald-800/40 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-emerald-200/60">
           <p>© {new Date().getFullYear()} MamaFresh Technologies Ltd. All rights reserved.</p>
           <div className="flex items-center gap-4">
-            <Link href="/about" className="hover:text-white transition-colors">
+            <Link href="/privacy" className="hover:text-white transition-colors">
               Terms & Privacy
             </Link>
             <span aria-hidden="true">|</span>

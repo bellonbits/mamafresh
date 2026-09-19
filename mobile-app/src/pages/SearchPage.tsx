@@ -42,7 +42,7 @@ export default function SearchPage() {
   const hasResults = products.length > 0 || sellers.length > 0;
 
   return (
-    <div className="min-h-screen animate-fade-in">
+    <div className="animate-fade-in">
       {/* Search header */}
       <div className="header-green px-4 py-3 sticky top-0 z-30">
         <div className="mx-auto flex max-w-4xl items-center gap-3">
